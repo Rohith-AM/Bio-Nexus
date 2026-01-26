@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bio-Nexus | Student Research Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
+        body { font-family: 'Space Grotesk', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+
+    <nav class="border-b border-gray-800 p-6">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
+                BIO-NEXUS 🧬
+            </h1>
+            <p class="text-gray-500 text-sm">v1.0.0 (Alpha)</p>
+        </div>
+    </nav>
+
+    <header class="text-center py-20 px-4">
+        <h2 class="text-5xl md:text-6xl font-bold mb-6">Where Biology Meets Code.</h2>
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto">
+            An open-source bioinformatics platform built for students, by a student.
+            Visualize, Analyze, and Discover.
+        </p>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 pb-20">
+        <h3 class="text-2xl font-bold mb-8 border-l-4 border-emerald-500 pl-4">Available Tools</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            <div class="bg-gray-800 rounded-xl p-8 border border-gray-700 hover:border-emerald-500 transition hover:-translate-y-2">
+                <div class="text-4xl mb-4">🧪</div>
+                <h3 class="text-xl font-bold mb-2">DNA Sequence Analyzer</h3>
+                <p class="text-gray-400 mb-6">
+                    Calculate GC content, sequence length, and estimate stability of DNA strands instantly.
+                </p>
+                <a href="tools/DNA-Converter.html" class="inline-block w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg transition">
+                    Launch Tool 🚀
+                </a>
+            </div>
+
+            <div class="bg-gray-800/50 rounded-xl p-8 border border-gray-700 opacity-60">
+                <div class="text-4xl mb-4">🧬</div>
+                <h3 class="text-xl font-bold mb-2">3D Protein Viewer</h3>
+                <p class="text-gray-400 mb-6">
+                    Visualize PDB files in 3D space directly in your browser. (Under Development)
+                </p>
+                <button class="w-full bg-gray-700 text-gray-400 font-bold py-3 rounded-lg cursor-not-allowed">
+                    Coming Soon
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="text-center py-8 text-gray-600 border-t border-gray-800">
+        <p>&copy; 2026 Bio-Nexus Project. Built by Rohith.</p>
+    </footer>
+
+</body>
+</html>
