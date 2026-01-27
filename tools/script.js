@@ -1,5 +1,4 @@
 // 📖 1. The Genetic Code Dictionary (Data)
-// இதுதான் நம்ம ரெஃபரன்ஸ் புக். கம்ப்யூட்டர் இதில் தேடி தான் பதில் சொல்லும்.
 const codonTable = {
     'ATA':'I', 'ATC':'I', 'ATT':'I', 'ATG':'M',
     'ACA':'T', 'ACC':'T', 'ACG':'T', 'ACT':'T',
@@ -15,34 +14,88 @@ const codonTable = {
     'GGA':'G', 'GGC':'G', 'GGG':'G', 'GGT':'G',
     'TCA':'S', 'TCC':'S', 'TCG':'S', 'TCT':'S',
     'TTC':'F', 'TTT':'F', 'TTA':'L', 'TTG':'L',
-    'TAC':'Y', 'TAT':'Y', 'TAA':'_', 'TAG':'_', // _ = STOP
+    'TAC':'Y', 'TAT':'Y', 'TAA':'_', 'TAG':'_', // STOP
     'TGC':'C', 'TGT':'C', 'TGA':'_', 'TGG':'W',
 };
 
-// 🧠 2. The Main Manager Function (Triggered by HTML Button)
+// 🧠 2. The Main Manager Function
 function analyzeDNA() {
-    // A. Input பெறுதல்
+    // A. Input
     const rawInput = document.getElementById('dnaInput').value.toUpperCase();
-    const input = rawInput.replace(/\s/g, ''); // Remove spaces
+    const input = rawInput.replace(/\s/g, ''); 
 
     if (input === "") {
         alert("Please enter a DNA sequence! (e.g., ATGC)");
         return;
     }
 
-    // B. வேலைகளை பிரித்து கொடுத்தல் (Calling Helper Functions)
-    const gcPercent = calculateGC(input);     // Link 1
-    const rnaSeq = transcribeToRNA(input);    // Link 2
-    const proteinSeq = translateToProtein(input); // Link 3 (NEW!)
+    // B. Logic Calls
+    const gcPercent = calculateGC(input);
+    const rnaSeq = transcribeToRNA(input);
+    const proteinSeq = translateToProtein(input);
 
-    // C. முடிவுகளை திரையில் காட்டுதல் (UI Update)
+    // C. UI Updates
     document.getElementById('lengthDisplay').innerText = input.length + " bp";
     document.getElementById('gcDisplay').innerText = gcPercent + "%";
-    document.getElementById('rnaDisplay').innerText = rnaSeq; // (HTML ID update needed)
-    document.getElementById('proteinDisplay').innerText = proteinSeq; // (NEW HTML ID needed)
+    
+    // ---------------------------------------------------------
+    // 🔥 STABILITY LOGIC (Now included!)
+    // ---------------------------------------------------------
+    const typeText = document.getElementById('typeDisplay');
+    if(gcPercent > 60) {
+        typeText.innerText = "🔥 High Stability (High GC)";
+        typeText.className = "text-lg font-bold text-red-400";
+    } else if (gcPercent < 40) {
+        typeText.innerText = "❄️ Low Stability (AT Rich)";
+        typeText.className = "text-lg font-bold text-blue-400";
+    } else {
+        typeText.innerText = "⚖️ Balanced Stability";
+        typeText.className = "text-lg font-bold text-yellow-400";
+    }
+    // ---------------------------------------------------------
 
-    // Show Results Box
+    // RNA & Protein Updates
+    document.getElementById('rnaResult').innerText = rnaSeq; 
+    document.getElementById('proteinDisplay').innerText = proteinSeq;
+
+    // Show Results
     document.getElementById('results').classList.remove('hidden');
+    
+    // Show RNA Container
+    const rnaContainer = document.getElementById('rnaContainer');
+    if(rnaContainer) rnaContainer.classList.remove('hidden');
+}
+
+// 👷 3. Helper Functions
+function calculateGC(dna) {
+    let gcCount = 0;
+    for (let char of dna) {
+        if (char === 'G' || char === 'C') gcCount++;
+    }
+    return (dna.length > 0) ? ((gcCount / dna.length) * 100).toFixed(2) : 0;
+}
+
+function transcribeToRNA(dna) {
+    let rna = "";
+    for (let char of dna) {
+        if (char === 'A') rna += 'U';
+        else if (char === 'T') rna += 'A';
+        else if (char === 'C') rna += 'G';
+        else if (char === 'G') rna += 'C';
+        else rna += char;
+    }
+    return rna;
+}
+
+function translateToProtein(dna) {
+    let protein = "";
+    for (let i = 0; i < dna.length; i += 3) {
+        let codon = dna.substring(i, i + 3);
+        if (codon.length === 3) {
+            protein += (codonTable[codon] || '?') + "-"; 
+        }
+    }
+    return protein.slice(0, -1); 
 }
 
 // 👷 3. Helper Functions (வேலைக்காரர்கள்)
