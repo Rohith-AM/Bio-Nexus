@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse Complement | Bio-Nexus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    // Check local storage and apply the theme immediately
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+    </script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'monospace'],
+                        sans: ['Space Grotesk', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
+        body { font-family: 'Space Grotesk', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 min-h-screen p-6 flex flex-col items-center">
+
+    <nav class="w-full max-w-4xl mb-8 flex justify-between items-center">
+        <a href="../index.html" class="flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition">
+            <span>←</span> Back to Nexus
+        </a>
+        <h1 class="text-xl font-bold tracking-widest text-emerald-500">BIO-NEXUS 🧬</h1>
+    </nav>
+
+    <main class="w-full max-w-3xl bg-slate-800/50 backdrop-blur-md border border-slate-700 p-8 rounded-2xl shadow-2xl">
+        
+        <h2 class="text-3xl font-bold text-white mb-2">🔄 Reverse & Complement</h2>
+        <p class="text-slate-400 mb-6 text-sm">Enter a DNA sequence to get its reverse, complement, and reverse-complement strands instantly.</p>
+
+        <div class="mb-6 relative">
+            <textarea id="seqInput" rows="3" 
+                class="w-full bg-slate-900/80 border border-slate-600 rounded-xl p-4 text-emerald-300 focus:outline-none focus:border-emerald-500 font-mono uppercase tracking-widest placeholder-slate-600"
+                placeholder="ATGC..."></textarea>
+            <button onclick="clearInput()" class="absolute top-2 right-2 text-xs text-slate-500 hover:text-red-400">CLEAR</button>
+        </div>
+
+        <button onclick="processSequence()" 
+            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-lg hover:shadow-emerald-500/20 mb-8">
+            Generate Strands ⚡
+        </button>
+
+        <div id="outputSection" class="grid grid-cols-1 gap-6 hidden opacity-0 transition-opacity duration-500">
+            
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 relative group">
+                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Reverse Sequence</label>
+                <div id="revOutput" class="font-mono text-blue-400 break-all">---</div>
+                <button onclick="copyToClipboard('revOutput')" class="absolute top-3 right-3 text-slate-600 hover:text-white opacity-0 group-hover:opacity-100 transition">📋</button>
+            </div>
+
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 relative group">
+                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Complement Sequence</label>
+                <div id="compOutput" class="font-mono text-purple-400 break-all">---</div>
+                <button onclick="copyToClipboard('compOutput')" class="absolute top-3 right-3 text-slate-600 hover:text-white opacity-0 group-hover:opacity-100 transition">📋</button>
+            </div>
+
+            <div class="bg-slate-900 p-4 rounded-xl border border-emerald-500/30 relative group shadow-lg shadow-emerald-900/20">
+                <label class="text-xs font-bold text-emerald-500 uppercase mb-1 block">🔥 Reverse Complement</label>
+                <div id="revCompOutput" class="font-mono text-yellow-400 font-bold break-all">---</div>
+                <button onclick="copyToClipboard('revCompOutput')" class="absolute top-3 right-3 text-slate-600 hover:text-white opacity-0 group-hover:opacity-100 transition">📋</button>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        function processSequence() {
+            let rawSeq = document.getElementById('seqInput').value.toUpperCase();
+            let seq = rawSeq.replace(/[^ATGC]/g, '');
+
+            if(!seq) { alert("Please enter a valid DNA sequence (A, T, G, C)!"); return; }
+
+            let reverse = seq.split('').reverse().join('');
+            
+            let complement = "";
+            let map = { 'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G' };
+            for(let char of seq) {
+                complement += map[char] || char;
+            }
+
+            let revComp = "";
+            for(let char of reverse) {
+                revComp += map[char] || char;
+            }
+
+            document.getElementById('revOutput').innerText = reverse;
+            document.getElementById('compOutput').innerText = complement;
+            document.getElementById('revCompOutput').innerText = revComp;
+
+            let outDiv = document.getElementById('outputSection');
+            outDiv.classList.remove('hidden');
+            setTimeout(() => outDiv.classList.remove('opacity-0'), 50);
+        }
+
+        function clearInput() {
+            document.getElementById('seqInput').value = '';
+            document.getElementById('outputSection').classList.add('hidden', 'opacity-0');
+        }
+
+        function copyToClipboard(elementId) {
+            let text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text);
+            alert("Copied to clipboard! ✅");
+        }
+    </script>
+</body>
+</html>
