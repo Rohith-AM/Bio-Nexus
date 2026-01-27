@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-        body { font-family: 'JetBrains Mono', monospace; } /* Coding feel font */
+        body { font-family: 'JetBrains Mono', monospace; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-200 min-h-screen p-8">
@@ -23,19 +23,20 @@
         <div class="mb-6">
             <label class="block text-sm text-slate-400 mb-2">Enter DNA Sequence (A, T, G, C only):</label>
             <textarea id="dnaInput" rows="4" 
-                class="w-full bg-slate-900 border border-slate-600 rounded-lg p-4 text-emerald-300 focus:outline-none focus:border-emerald-500 font-mono uppercase"
+                class="w-full bg-slate-900 border border-slate-600 rounded-lg p-4 text-emerald-300 focus:outline-none focus:border-emerald-500 font-mono uppercase placeholder-slate-600"
                 placeholder="ATGCGCTA..."></textarea>
         </div>
 
         <button onclick="analyzeDNA()" 
-            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg transition mb-6">
+            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg transition mb-6 shadow-lg hover:shadow-emerald-500/20">
             Analyze Sequence ⚡
         </button>
 
         <div id="results" class="hidden space-y-4">
+            
             <div class="bg-slate-900 p-4 rounded-lg flex justify-between items-center border border-slate-700">
                 <span class="text-slate-400">Total Base Pairs (Length):</span>
-                <span id="lengthDisplay" class="text-2xl font-bold text-white">0</span>
+                <span id="lengthDisplay" class="text-2xl font-bold text-white">0 bp</span>
             </div>
 
             <div class="bg-slate-900 p-4 rounded-lg flex justify-between items-center border border-slate-700">
@@ -43,10 +44,29 @@
                 <span id="gcDisplay" class="text-2xl font-bold text-yellow-400">0%</span>
             </div>
             
-             <div class="bg-slate-900 p-4 rounded-lg flex justify-between items-center border border-slate-700">
+            <div class="bg-slate-900 p-4 rounded-lg flex justify-between items-center border border-slate-700">
                 <span class="text-slate-400">Sample Type:</span>
                 <span id="typeDisplay" class="text-lg font-bold text-blue-400">-</span>
             </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-700 hidden" id="rnaContainer">
+                <label class="block text-slate-400 text-sm mb-2 font-bold">
+                    mRNA Sequence (Transcription) 💊:
+                </label>
+                <div id="rnaResult" class="w-full p-4 bg-slate-900 border border-slate-600 rounded-lg text-purple-400 font-mono break-all select-all tracking-widest">
+                    ---
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-700" id="proteinContainer">
+                <label class="block text-slate-400 text-sm mb-2 font-bold">
+                    Protein Sequence (Amino Acids) 🥩:
+                </label>
+                <div id="proteinDisplay" class="w-full p-4 bg-slate-900 border border-slate-600 rounded-lg text-yellow-400 font-mono break-all select-all tracking-widest">
+                    ---
+                </div>
+            </div>
+
         </div>
     </main>
 
