@@ -6,14 +6,14 @@
     <title>Bio-Nexus | DNA Analytics</title>
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <script>
-    // Check local storage and apply the theme immediately
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-    } else {
-        document.documentElement.classList.remove('dark');
-    }
-    </script>
+        <script>
+        // Check local storage and apply the theme immediately
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         body { font-family: 'JetBrains Mono', monospace; }
@@ -80,5 +80,18 @@
     </main>
 
     <script src="script.js"></script>
+    <footer class="py-4 border-t border-gray-200 dark:border-slate-800 mt-8 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm">
+    <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-center items-center gap-2 text-xs text-gray-500 font-mono">
+        
+        <span>© 2026 <span class="text-emerald-500 font-bold">Bio-Nexus Lab</span>.</span>
+        
+        <span class="hidden md:inline text-gray-300 dark:text-slate-700">|</span>
+        
+        <span>
+            Engineered by <span class="text-indigo-400 font-bold tracking-widest">NEXORA</span> ⚡
+        </span>
+
+    </div>
+</footer>
 </body>
 </html>
