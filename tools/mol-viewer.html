@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXORA | 3D Mol Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+
+    <nav class="p-5 border-b border-gray-800 flex justify-between items-center bg-gray-900/50 backdrop-blur-md sticky top-0 z-50">
+        <h1 class="text-2xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
+            BIO-NEXUS <span class="text-xs text-gray-400 font-normal">by NEXORA™</span>
+        </h1>
+        <a href="../index.html" class="text-gray-400 hover:text-white transition">← Back to Hub</a>
+    </nav>
+
+    <div class="container mx-auto p-5 mt-5">
+        <h2 class="text-3xl font-bold text-center mb-6 text-blue-400">3D Protein Visualizer</h2>
+        
+        <div class="flex justify-center gap-4 mb-6">
+            <input type="text" id="pdbInput" placeholder="Enter PDB ID (e.g., 6LU7)" class="p-3 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500 text-white w-64">
+            <button onclick="loadPDB()" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded font-bold transition shadow-lg shadow-blue-500/30">Visualize 🧬</button>
+        </div>
+
+        <div id="container-01" class="relative w-full h-[500px] border border-gray-700 rounded-xl overflow-hidden bg-black shadow-2xl">
+            <p class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-500">Structure will load here...</p>
+        </div>
+        
+        <p class="text-center text-gray-500 mt-4 text-sm">Powered by 3Dmol.js | Try ID: <b>1UBQ</b> (Ubiquitin) or <b>6LU7</b> (COVID Protease)</p>
+    </div>
+
+    <script>
+        function loadPDB() {
+            let pdbID = document.getElementById('pdbInput').value.trim();
+            if (!pdbID) { alert("Please enter a PDB ID!"); return; }
+
+            // Clear previous viewer
+            document.getElementById('container-01').innerHTML = "";
+
+            // Initialize Viewer
+            let element = document.getElementById('container-01');
+            let config = { backgroundColor: 'black' };
+            let viewer = $3Dmol.createViewer(element, config);
+
+            // Fetch PDB Data
+            let uri = "https://files.rcsb.org/download/" + pdbID + ".pdb";
+            
+            jQuery.ajax({
+                url: uri, 
+                success: function(data) {
+                    viewer.addModel(data, "pdb");                       /* Load data */
+                    viewer.setStyle({}, {cartoon: {color: 'spectrum'}}); /* Style as Cartoon */
+                    viewer.zoomTo();                                    /* Zoom to fit */
+                    viewer.render();                                    /* Render */
+                },
+                error: function(hdr, status, err) {
+                    alert('Failed to load PDB ' + pdbID + ": " + err);
+                },
+            });
+        }
+        
+        // Load jQuery for AJAX (Required for fetching external PDBs)
+        let script = document.createElement('script');
+        script.src = "https://code.jquery.com/jquery-3.6.0.min.js";
+        document.head.appendChild(script);
+    </script>
+
+</body>
+</html>

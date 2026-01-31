@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NEXORA | Restriction Mapper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col">
+
+    <nav class="p-5 border-b border-gray-800 flex justify-between items-center bg-gray-900/50 backdrop-blur-md">
+        <h1 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-500">
+            BIO-NEXUS <span class="text-xs text-gray-400">Restriction Map</span>
+        </h1>
+        <a href="../index.html" class="text-gray-400 hover:text-white">← Back</a>
+    </nav>
+
+    <div class="container mx-auto p-5 max-w-4xl flex-grow">
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
+            <h2 class="text-2xl font-bold mb-4 text-purple-400">🧬 Restriction Site Finder</h2>
+            
+            <label class="block text-gray-400 mb-2">Paste DNA Sequence (A, T, G, C):</label>
+            <textarea id="dnaInput" class="w-full p-4 bg-gray-900 rounded border border-gray-600 font-mono text-green-400 focus:outline-none h-32" placeholder="GAATTCGGATCC..."></textarea>
+
+            <button onclick="findSites()" class="mt-4 w-full py-3 bg-purple-600 hover:bg-purple-500 rounded font-bold shadow-lg shadow-purple-500/30 transition">Scan for Enzymes 🔍</button>
+
+            <div id="results" class="mt-6 hidden">
+                <h3 class="text-xl font-bold text-gray-300 border-b border-gray-600 pb-2">Results:</h3>
+                <div id="outputList" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const enzymes = {
+            "EcoRI": "GAATTC",
+            "BamHI": "GGATCC",
+            "HindIII": "AAGCTT",
+            "NotI": "GCGGCCGC",
+            "XbaI": "TCTAGA"
+        };
+
+        function findSites() {
+            let dna = document.getElementById('dnaInput').value.toUpperCase().replace(/[^ATGC]/g, ''); // Clean input
+            let outputDiv = document.getElementById('outputList');
+            let resultsSection = document.getElementById('results');
+            
+            outputDiv.innerHTML = ""; // Clear old results
+            resultsSection.classList.remove('hidden');
+
+            if(!dna) {
+                outputDiv.innerHTML = "<p class='text-red-400'>Please enter a DNA sequence!</p>";
+                return;
+            }
+
+            let found = false;
+
+            for (let [name, site] of Object.entries(enzymes)) {
+                let count = 0;
+                let positions = [];
+                let regex = new RegExp(site, 'g');
+                let match;
+
+                while ((match = regex.exec(dna)) !== null) {
+                    count++;
+                    positions.push(match.index + 1); // 1-based index
+                }
+
+                if (count > 0) {
+                    found = true;
+                    outputDiv.innerHTML += `
+                        <div class="bg-gray-700 p-4 rounded border-l-4 border-green-500">
+                            <h4 class="font-bold text-lg text-white">${name}</h4>
+                            <p class="text-sm text-gray-400">Sequence: <span class="font-mono text-yellow-300">${site}</span></p>
+                            <p class="text-sm mt-1">Found: <b class="text-white">${count}</b> times</p>
+                            <p class="text-xs text-gray-500 mt-1">Positions: ${positions.join(', ')}</p>
+                        </div>
+                    `;
+                }
+            }
+
+            if (!found) {
+                outputDiv.innerHTML = "<p class='text-gray-500 col-span-2 text-center'>No restriction sites found for common enzymes (EcoRI, BamHI, etc.)</p>";
+            }
+        }
+    </script>
+</body>
+</html>

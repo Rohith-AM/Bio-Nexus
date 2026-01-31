@@ -1,14 +1,15 @@
 <!DOCTYPE html>
-<html lang="en" class="dark"> <head>
+<html lang="en" class="dark">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bio-Nexus | The Universal Research Lab</title>
+    <title>NEXORA | Bio-Nexus Lab</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script>
         tailwind.config = {
-            darkMode: 'class', // Manual toggle strategy
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
@@ -17,10 +18,10 @@
                     },
                     colors: {
                         bio: {
-                            dark: '#0f172a',    // Deep Slate
-                            light: '#f8fafc',   // Clean White
-                            primary: '#10b981', // Emerald
-                            accent: '#3b82f6',  // Blue
+                            dark: '#0f172a',    
+                            light: '#f8fafc',   
+                            primary: '#10b981', 
+                            accent: '#3b82f6',  
                         }
                     }
                 }
@@ -36,12 +37,11 @@
         
         /* Glassmorphism Effect */
         .glass-card {
-            background: rgba(30, 41, 59, 0.7); /* Dark Glass */
+            background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        /* Light Mode Glass */
         html:not(.dark) .glass-card {
             background: rgba(255, 255, 255, 0.8);
             border: 1px solid rgba(0, 0, 0, 0.05);
@@ -52,7 +52,7 @@
         .gradient-text {
             background: linear-gradient(to right, #34d399, #60a5fa);
             -webkit-background-clip: text;
-            background-clip: text; /* Standard property for compatibility */
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             background-size: 200% auto;
             animation: shine 3s linear infinite;
@@ -89,7 +89,7 @@
         <p class="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
             The Universal Open-Source Platform for Students & Researchers.
             <br>
-            <span class="text-sm font-mono text-emerald-600 dark:text-emerald-400 mt-2 block">v1.0.0 [Alpha]</span>
+            <span class="text-sm font-mono text-emerald-600 dark:text-emerald-400 mt-2 block">v1.0.0 [Stable]</span>
         </p>
     </header>
 
@@ -108,67 +108,75 @@
                 </div>
                 <h3 class="text-2xl font-bold mb-2 group-hover:text-emerald-500 transition">Sequence Analyzer</h3>
                 <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                    Analyze DNA sequences, calculate GC%, check stability, and transcribe to mRNA/Protein instantly.
+                    Analyze DNA sequences, calculate GC%, check stability, and transcribe to mRNA/Protein.
                 </p>
                 <div class="text-emerald-500 font-mono text-sm font-bold flex items-center gap-2">
                     Launch Tool <span>→</span>
                 </div>
             </a>
 
-            <div class="glass-card rounded-2xl p-8 opacity-75 grayscale hover:grayscale-0 hover:opacity-100 transition duration-500 relative overflow-hidden group">
-                <div class="absolute inset-0 bg-gray-200/50 dark:bg-black/50 z-10 flex items-center justify-center backdrop-blur-[2px] group-hover:hidden transition">
-                    <span class="bg-black text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest">Locked</span>
-                </div>
-                
+            <a href="tools/mol-viewer.html" class="glass-card rounded-2xl p-8 hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/10 transition duration-300 group cursor-pointer block">
                 <div class="flex justify-between items-start mb-6">
                     <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-3xl">🧊</div>
                     <span class="px-3 py-1 text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded-full">BETA</span>
                 </div>
-                <h3 class="text-2xl font-bold mb-2">3D Mol-Viewer</h3>
+                <h3 class="text-2xl font-bold mb-2 group-hover:text-blue-500 transition">3D Mol-Viewer</h3>
                 <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                    Visualize complex PDB protein structures in 3D space. Powered by Mol*.
+                    Visualize complex PDB protein structures in 3D space directly in your browser.
                 </p>
-                <div class="text-blue-500 font-mono text-sm font-bold">Coming Soon...</div>
-            </div>
-
-            <div class="glass-card rounded-2xl p-8 opacity-60 border-dashed border-2 border-gray-300 dark:border-slate-700">
-                <div class="flex justify-between items-start mb-6">
-                    <div class="p-3 bg-gray-100 dark:bg-slate-800 rounded-lg text-3xl">✂️</div>
+                <div class="text-blue-500 font-mono text-sm font-bold flex items-center gap-2">
+                    Launch Viewer <span>→</span>
                 </div>
-                <h3 class="text-2xl font-bold mb-2 text-gray-400">Restriction Mapper</h3>
-                <p class="text-gray-500 text-sm">
-                    Find enzyme cut sites and generate visual plasmid maps.
+            </a>
+
+            <a href="tools/restriction.html" class="glass-card rounded-2xl p-8 hover:scale-[1.02] hover:shadow-2xl hover:shadow-pink-500/10 transition duration-300 group cursor-pointer block">
+                <div class="flex justify-between items-start mb-6">
+                    <div class="p-3 bg-pink-100 dark:bg-pink-900/30 rounded-lg text-3xl">✂️</div>
+                    <span class="px-3 py-1 text-xs font-bold bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300 rounded-full">NEW</span>
+                </div>
+                <h3 class="text-2xl font-bold mb-2 group-hover:text-pink-500 transition">Restriction Mapper</h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                    Find enzyme cut sites (EcoRI, BamHI) and map DNA fragments instantly.
                 </p>
-            </div>
+                <div class="text-pink-500 font-mono text-sm font-bold flex items-center gap-2">
+                    Launch Tool <span>→</span>
+                </div>
+            </a>
+
             <a href="tools/reverse.html" class="glass-card rounded-2xl p-8 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/10 transition duration-300 group cursor-pointer block">
-    <div class="flex justify-between items-start mb-6">
-        <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-3xl">🔄</div>
-        <span class="px-3 py-1 text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 rounded-full">NEW</span>
-    </div>
-    <h3 class="text-2xl font-bold mb-2 group-hover:text-purple-500 transition">Rev-Comp Gen</h3>
-    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
-        Generate Reverse, Complement, and Reverse-Complement strands for primers.
-    </p>
-    <div class="text-purple-500 font-mono text-sm font-bold flex items-center gap-2">
-        Launch Tool <span>→</span>
-    </div>
-</a>
+                <div class="flex justify-between items-start mb-6">
+                    <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-3xl">🔄</div>
+                    <span class="px-3 py-1 text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 rounded-full">NEW</span>
+                </div>
+                <h3 class="text-2xl font-bold mb-2 group-hover:text-purple-500 transition">Rev-Comp Gen</h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                    Generate Reverse, Complement, and Reverse-Complement strands for primers.
+                </p>
+                <div class="text-purple-500 font-mono text-sm font-bold flex items-center gap-2">
+                    Launch Tool <span>→</span>
+                </div>
+            </a>
+
         </div>
     </main>
 
-    <footer class="text-center py-8 text-gray-500 text-sm border-t border-gray-200 dark:border-slate-800 font-mono">
-        <p>Built with ❤️ by <span class="text-emerald-500 font-bold">Rohith</span> | Powered by Bio-Nexus AI</p>
+    <footer class="py-4 border-t border-gray-200 dark:border-slate-800 mt-8 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-center items-center gap-2 text-xs text-gray-500 font-mono">
+            <span>© 2026 <span class="text-emerald-500 font-bold">Bio-Nexus Lab</span>.</span>
+            <span class="hidden md:inline text-gray-300 dark:text-slate-700">|</span>
+            <span>
+                Engineered by <span class="text-indigo-400 font-bold tracking-widest">NEXORA LABS™</span> ⚡
+            </span>
+        </div>
     </footer>
 
     <script>
-        // Check for saved user preference, if any, on load
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
         }
 
-        // Toggle Icons based on mode
         function updateIcons() {
             const isDark = document.documentElement.classList.contains('dark');
             if (isDark) {
@@ -179,9 +187,8 @@
                 document.getElementById('moonIcon').classList.remove('hidden');
             }
         }
-        updateIcons(); // Run on load
+        updateIcons();
 
-        // Manual Toggle Function
         function toggleTheme() {
             if (document.documentElement.classList.contains('dark')) {
                 document.documentElement.classList.remove('dark');
@@ -193,18 +200,5 @@
             updateIcons();
         }
     </script>
-<footer class="py-4 border-t border-gray-200 dark:border-slate-800 mt-8 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm">
-    <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-center items-center gap-2 text-xs text-gray-500 font-mono">
-        
-        <span>© 2026 <span class="text-emerald-500 font-bold">Bio-Nexus Lab</span>.</span>
-        
-        <span class="hidden md:inline text-gray-300 dark:text-slate-700">|</span>
-        
-        <span>
-            Engineered by <span class="text-indigo-400 font-bold tracking-widest">NEXORA</span> ⚡
-        </span>
-
-    </div>
-</footer>
 </body>
 </html>
