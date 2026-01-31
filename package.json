@@ -1,8 +1,0 @@
-{
-  "name": "bio-nexus-app",
-  "version": "1.0.0",
-  "description": "Bio Nexus Research Tool",
-  "dependencies": {
-    "@google/generative-ai": "^0.2.0"
-  }
-}
