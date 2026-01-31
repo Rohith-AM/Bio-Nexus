@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", function() {
             </div>
             
             <div class="chat-body" id="chat-body">
-                <div class="msg ai">Hello Commander! I am Dr. Nexus. How can I assist with your research today?</div>
+                <div class="msg ai">Hello Researcher! I am Dr. Nexus. How can I assist with your research today?</div>
             </div>
 
             <div class="chat-footer">
