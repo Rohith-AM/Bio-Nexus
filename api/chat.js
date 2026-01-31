@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 
     // 4. Connect to Google (Gemini 1.5 Flash)
     // Note: We use 'v1beta' which is standard for AI Studio keys
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
     
     const response = await fetch(url, {
       method: 'POST',
