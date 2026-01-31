@@ -41,7 +41,7 @@ export default async function handler(req, res) {
 
     // 3. The Model (Using the reliable Free Champion: gemini-2.5-flash)
     // Note: We are sending the System Instruction + User Message together for best context.
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
     
     const response = await fetch(url, {
       method: 'POST',
