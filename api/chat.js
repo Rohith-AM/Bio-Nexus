@@ -1,49 +1,43 @@
 /* api/chat.js */
 export default async function handler(req, res) {
-  // 1. Check if the request is POST
+  // 1. Method Check
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // 2. Get the user's message from the frontend
-  const { message } = req.body;
-
-  if (!message) {
-    return res.status(400).json({ error: 'Message is required' });
+  // 2. API Key Check (இங்குதான் பிரச்சனை இருக்க வாய்ப்பு அதிகம்)
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error("❌ CRITICAL: API Key is missing in Vercel Settings!");
+    return res.status(500).json({ error: 'API Key is missing in Vercel Environment Variables' });
   }
 
-  // 3. Prepare the payload for Gemini API
-  const apiKey = process.env.GEMINI_API_KEY; // This takes the key from Vercel Vault
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-  const payload = {
-    contents: [{
-      parts: [{ text: message }]
-    }]
-  };
+  const { message } = req.body;
 
   try {
-    // 4. Send request to Google
+    // 3. Call Google
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: message }] }] }),
     });
 
     const data = await response.json();
 
-    // 5. Check for errors from Google
+    // 4. Handle Google Errors
     if (!response.ok) {
-      return res.status(500).json({ error: data.error?.message || 'Error fetching from Gemini' });
+      console.error("❌ GOOGLE ERROR:", JSON.stringify(data)); // இது லாக்ஸ்ல தெரியும்
+      throw new Error(data.error?.message || 'Unknown error from Gemini');
     }
 
-    // 6. Send the answer back to your website
+    // 5. Success
     const botReply = data.candidates[0].content.parts[0].text;
     return res.status(200).json({ reply: botReply });
 
   } catch (error) {
-    return res.status(500).json({ error: 'Internal Server Error' });
+    console.error("❌ SERVER CRASH:", error.message); // இதுவும் லாக்ஸ்ல தெரியும்
+    return res.status(500).json({ error: error.message });
   }
 }
