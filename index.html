@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NEXORA | Bio-Nexus Lab</title>
     
+    <link rel="stylesheet" href="style.css">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script>
@@ -23,136 +25,116 @@
                             primary: '#10b981', 
                             accent: '#3b82f6',  
                         }
+                    },
+                    animation: {
+                        'spin-slow': 'spin 8s linear infinite',
                     }
                 }
             }
         }
     </script>
-
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-        
-        body { font-family: 'Space Grotesk', sans-serif; transition: background-color 0.3s, color 0.3s; }
-        
-        /* Glassmorphism Effect */
-        .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        html:not(.dark) .glass-card {
-            background: rgba(255, 255, 255, 0.8);
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Gradient Text Animation */
-        .gradient-text {
-            background: linear-gradient(to right, #34d399, #60a5fa);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-size: 200% auto;
-            animation: shine 3s linear infinite;
-        }
-        @keyframes shine {
-            to { background-position: 200% center; }
-        }
-    </style>
 </head>
-<body class="bg-gray-100 text-gray-900 dark:bg-slate-900 dark:text-slate-200 min-h-screen flex flex-col">
+<body class="bg-gray-50 text-gray-900 dark:bg-slate-950 dark:text-slate-200 min-h-screen flex flex-col relative overflow-x-hidden">
 
-    <nav class="border-b border-gray-200 dark:border-slate-800 p-6 sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+    <div class="fixed inset-0 pointer-events-none overflow-hidden">
+        <div class="bio-blob w-96 h-96 bg-emerald-500/20 top-0 -left-20"></div>
+        <div class="bio-blob w-80 h-80 bg-blue-500/20 bottom-0 -right-20 animation-delay-2000"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-3xl animate-pulse"></div>
+    </div>
+
+    <nav class="border-b border-gray-200 dark:border-slate-800 p-6 sticky top-0 z-40 bg-white/70 dark:bg-slate-950/70 backdrop-blur-md">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <span class="text-3xl">🧬</span>
+            <div class="flex items-center gap-3 group cursor-pointer">
+                <span class="text-3xl group-hover:animate-spin-slow transition-all">🧬</span>
                 <h1 class="text-3xl font-bold tracking-tighter">
                     BIO-<span class="gradient-text">NEXUS</span>
                 </h1>
             </div>
 
-            <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-slate-800 transition">
+            <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-slate-800 transition border border-transparent hover:border-gray-300 dark:hover:border-slate-700">
                 <svg id="sunIcon" class="w-6 h-6 text-yellow-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                <svg id="moonIcon" class="w-6 h-6 text-slate-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                <svg id="moonIcon" class="w-6 h-6 text-slate-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
             </button>
         </div>
     </nav>
 
-    <header class="text-center py-24 px-4 relative overflow-hidden">
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl -z-10"></div>
-
+    <header class="text-center py-24 px-4 relative">
         <h2 class="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
             Biology Meets <span class="text-emerald-500 dark:text-emerald-400">Code.</span>
         </h2>
         <p class="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
             The Universal Open-Source Platform for Students & Researchers.
             <br>
-            <span class="text-sm font-mono text-emerald-600 dark:text-emerald-400 mt-2 block">v1.0.0 [Stable]</span>
+            <span class="inline-block mt-4 px-4 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-mono border border-emerald-500/20">
+                v1.0.0 [Stable]
+            </span>
         </p>
     </header>
 
-    <main class="max-w-7xl mx-auto px-6 pb-20 flex-grow">
+    <main class="max-w-7xl mx-auto px-6 pb-20 flex-grow z-10">
         <h3 class="text-2xl font-bold mb-8 flex items-center gap-2">
-            <span class="w-1 h-8 bg-emerald-500 rounded-full"></span>
+            <span class="w-1.5 h-8 bg-gradient-to-b from-emerald-400 to-blue-500 rounded-full"></span>
             Research Suite (Tier 1)
         </h3>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             
-            <a href="tools/dna-converter.html" class="glass-card rounded-2xl p-8 hover:scale-[1.02] hover:shadow-2xl hover:shadow-emerald-500/10 transition duration-300 group cursor-pointer block">
-                <div class="flex justify-between items-start mb-6">
-                    <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-3xl">🧪</div>
-                    <span class="px-3 py-1 text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 rounded-full">READY</span>
+            <a href="tools/dna-converter.html" class="glass-card rounded-2xl p-8 group cursor-pointer block relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150"></div>
+                <div class="flex justify-between items-start mb-6 relative">
+                    <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl text-3xl group-hover:scale-110 transition">🧪</div>
+                    <span class="px-3 py-1 text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 rounded-full border border-emerald-200 dark:border-emerald-800">READY</span>
                 </div>
                 <h3 class="text-2xl font-bold mb-2 group-hover:text-emerald-500 transition">Sequence Analyzer</h3>
                 <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
                     Analyze DNA sequences, calculate GC%, check stability, and transcribe to mRNA/Protein.
                 </p>
-                <div class="text-emerald-500 font-mono text-sm font-bold flex items-center gap-2">
+                <div class="text-emerald-500 font-mono text-sm font-bold flex items-center gap-2 group-hover:translate-x-2 transition">
                     Launch Tool <span>→</span>
                 </div>
             </a>
 
-            <a href="tools/mol-viewer.html" class="glass-card rounded-2xl p-8 hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/10 transition duration-300 group cursor-pointer block">
-                <div class="flex justify-between items-start mb-6">
-                    <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-3xl">🧊</div>
-                    <span class="px-3 py-1 text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded-full">BETA</span>
+            <a href="tools/mol-viewer.html" class="glass-card rounded-2xl p-8 group cursor-pointer block relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150"></div>
+                <div class="flex justify-between items-start mb-6 relative">
+                    <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-3xl group-hover:scale-110 transition">🧊</div>
+                    <span class="px-3 py-1 text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded-full border border-blue-200 dark:border-blue-800">BETA</span>
                 </div>
                 <h3 class="text-2xl font-bold mb-2 group-hover:text-blue-500 transition">3D Mol-Viewer</h3>
                 <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
                     Visualize complex PDB protein structures in 3D space directly in your browser.
                 </p>
-                <div class="text-blue-500 font-mono text-sm font-bold flex items-center gap-2">
+                <div class="text-blue-500 font-mono text-sm font-bold flex items-center gap-2 group-hover:translate-x-2 transition">
                     Launch Viewer <span>→</span>
                 </div>
             </a>
 
-            <a href="tools/restriction.html" class="glass-card rounded-2xl p-8 hover:scale-[1.02] hover:shadow-2xl hover:shadow-pink-500/10 transition duration-300 group cursor-pointer block">
-                <div class="flex justify-between items-start mb-6">
-                    <div class="p-3 bg-pink-100 dark:bg-pink-900/30 rounded-lg text-3xl">✂️</div>
-                    <span class="px-3 py-1 text-xs font-bold bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300 rounded-full">NEW</span>
+            <a href="tools/restriction.html" class="glass-card rounded-2xl p-8 group cursor-pointer block relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-20 h-20 bg-pink-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150"></div>
+                <div class="flex justify-between items-start mb-6 relative">
+                    <div class="p-3 bg-pink-100 dark:bg-pink-900/30 rounded-xl text-3xl group-hover:scale-110 transition">✂️</div>
+                    <span class="px-3 py-1 text-xs font-bold bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300 rounded-full border border-pink-200 dark:border-pink-800">NEW</span>
                 </div>
                 <h3 class="text-2xl font-bold mb-2 group-hover:text-pink-500 transition">Restriction Mapper</h3>
                 <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
                     Find enzyme cut sites (EcoRI, BamHI) and map DNA fragments instantly.
                 </p>
-                <div class="text-pink-500 font-mono text-sm font-bold flex items-center gap-2">
+                <div class="text-pink-500 font-mono text-sm font-bold flex items-center gap-2 group-hover:translate-x-2 transition">
                     Launch Tool <span>→</span>
                 </div>
             </a>
 
-            <a href="tools/reverse.html" class="glass-card rounded-2xl p-8 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/10 transition duration-300 group cursor-pointer block">
-                <div class="flex justify-between items-start mb-6">
-                    <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-3xl">🔄</div>
-                    <span class="px-3 py-1 text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 rounded-full">NEW</span>
+            <a href="tools/reverse.html" class="glass-card rounded-2xl p-8 group cursor-pointer block relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-20 h-20 bg-purple-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150"></div>
+                <div class="flex justify-between items-start mb-6 relative">
+                    <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl text-3xl group-hover:scale-110 transition">🔄</div>
+                    <span class="px-3 py-1 text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 rounded-full border border-purple-200 dark:border-purple-800">NEW</span>
                 </div>
                 <h3 class="text-2xl font-bold mb-2 group-hover:text-purple-500 transition">Rev-Comp Gen</h3>
                 <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
                     Generate Reverse, Complement, and Reverse-Complement strands for primers.
                 </p>
-                <div class="text-purple-500 font-mono text-sm font-bold flex items-center gap-2">
+                <div class="text-purple-500 font-mono text-sm font-bold flex items-center gap-2 group-hover:translate-x-2 transition">
                     Launch Tool <span>→</span>
                 </div>
             </a>
@@ -160,17 +142,18 @@
         </div>
     </main>
 
-    <footer class="py-4 border-t border-gray-200 dark:border-slate-800 mt-8 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm">
-        <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-center items-center gap-2 text-xs text-gray-500 font-mono">
+    <footer class="py-6 border-t border-gray-200 dark:border-slate-800 mt-8 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-center items-center gap-4 text-xs text-gray-500 font-mono">
             <span>© 2026 <span class="text-emerald-500 font-bold">Bio-Nexus Lab</span>.</span>
             <span class="hidden md:inline text-gray-300 dark:text-slate-700">|</span>
             <span>
-                Engineered by <span class="text-indigo-400 font-bold tracking-widest">NEXORA LABS™</span> ⚡
+                Engineered by <span class="text-indigo-500 dark:text-indigo-400 font-bold tracking-widest">NEXORA LABS™</span> ⚡
             </span>
         </div>
     </footer>
 
     <script>
+        // Theme Toggle Logic
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
@@ -179,12 +162,15 @@
 
         function updateIcons() {
             const isDark = document.documentElement.classList.contains('dark');
+            const sun = document.getElementById('sunIcon');
+            const moon = document.getElementById('moonIcon');
+            
             if (isDark) {
-                document.getElementById('sunIcon').classList.remove('hidden');
-                document.getElementById('moonIcon').classList.add('hidden');
+                sun.classList.remove('hidden');
+                moon.classList.add('hidden');
             } else {
-                document.getElementById('sunIcon').classList.add('hidden');
-                document.getElementById('moonIcon').classList.remove('hidden');
+                sun.classList.add('hidden');
+                moon.classList.remove('hidden');
             }
         }
         updateIcons();
@@ -200,6 +186,7 @@
             updateIcons();
         }
     </script>
-    <script src="/js/nexus-widget.js"></script>
+    
+    <script src="js/nexus-widget.js"></script>
 </body>
 </html>
