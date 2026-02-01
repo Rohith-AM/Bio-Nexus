@@ -1,88 +1,60 @@
-/* style.css - Cyber-Bio Aesthetics */
+/* style.css - Refined Dark Theme */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-
-:root {
-    --bio-green: #10b981;
-    --bio-blue: #3b82f6;
-    --bio-dark: #0f172a;
-    --neon-glow: 0 0 10px rgba(16, 185, 129, 0.5), 0 0 20px rgba(16, 185, 129, 0.3);
-}
 
 body {
     font-family: 'Space Grotesk', sans-serif;
     transition: background-color 0.3s, color 0.3s;
     overflow-x: hidden;
+    background-color: #0f172a; /* Force Dark Background */
 }
 
-/* --- 1. SCI-FI BACKGROUND (The Moving Grid) --- */
+/* --- 1. THE GRID (Fixed visibility) --- */
 .sci-fi-grid {
     position: fixed;
-    top: 0; left: 0; width: 200%; height: 200%;
-    background-image: 
-        linear-gradient(rgba(16, 185, 129, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
-    background-size: 50px 50px; /* Grid Box Size */
+    top: 0; left: 0; width: 100%; height: 100%;
     z-index: -2;
-    transform: perspective(500px) rotateX(60deg) translateY(-100px) translateZ(-200px);
-    animation: grid-move 20s linear infinite;
+    background-image: 
+        linear-gradient(rgba(16, 185, 129, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(16, 185, 129, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: linear-gradient(to bottom, transparent, 10%, black, 90%, transparent);
     pointer-events: none;
 }
 
-@keyframes grid-move {
-    0% { transform: perspective(500px) rotateX(60deg) translateY(0) translateZ(-200px); }
-    100% { transform: perspective(500px) rotateX(60deg) translateY(50px) translateZ(-200px); }
-}
-
-/* Background Blobs (Enhanced) */
+/* Background Blobs */
 .bio-blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(90px);
-    opacity: 0.5;
+    filter: blur(100px);
+    opacity: 0.3;
     z-index: -1;
-    animation: pulse-float 10s infinite alternate;
+    animation: float 15s infinite alternate;
 }
-@keyframes pulse-float {
-    0% { transform: scale(1); opacity: 0.4; }
-    100% { transform: scale(1.2); opacity: 0.6; }
-}
+@keyframes float { 0% { transform: translate(0,0); } 100% { transform: translate(20px, -20px); } }
 
-/* --- 2. GLASS CARDS (Premium Look) --- */
+/* --- 2. GLASS CARDS (Darker & Sleeker) --- */
 .glass-card {
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy effect */
-}
-
-html.dark .glass-card {
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    background: rgba(30, 41, 59, 0.4); /* Darker base */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
 }
 
 .glass-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 20px 50px rgba(16, 185, 129, 0.15);
-    border-color: rgba(16, 185, 129, 0.5);
+    transform: translateY(-5px);
+    border-color: rgba(16, 185, 129, 0.3); /* Emerald border on hover */
+    box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.2);
 }
 
-/* --- 3. TEXT EFFECTS --- */
+/* --- 3. TEXT --- */
 .gradient-text {
-    background: linear-gradient(to right, #34d399, #60a5fa, #a78bfa, #34d399);
+    background: linear-gradient(to right, #34d399, #3b82f6);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    background-size: 300% auto;
-    animation: shine 5s linear infinite;
     font-weight: 800;
 }
-@keyframes shine { to { background-position: 300% center; } }
-
-/* --- 4. UTILS --- */
-.tool-icon { transition: transform 0.3s ease; }
-.glass-card:hover .tool-icon { transform: rotate(15deg) scale(1.1); }
