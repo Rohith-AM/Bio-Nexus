@@ -6,6 +6,7 @@
     <title>NEXORA | Bio-Nexus Lab</title>
     
     <link rel="stylesheet" href="style.css">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script>
@@ -27,8 +28,41 @@
 </head>
 <body class="bg-gray-50 text-gray-900 dark:bg-slate-950 dark:text-slate-200 min-h-screen flex flex-col relative overflow-x-hidden transition-colors duration-300">
 
-    <div class="bio-bg-container">
-    <div class="bio-blob blob-1"></div> <div class="bio-blob blob-2"></div> <div class="bio-blob blob-3"></div> </div>
+    <div id="dna-canvas">
+        <div class="dna-strand-container" id="helix-wrapper"></div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const container = document.getElementById('helix-wrapper');
+            const totalPairs = 45; // வரிகளின் எண்ணிக்கை
+            const height = 1400;   // DNA உயரம்
+
+            for (let i = 0; i < totalPairs; i++) {
+                const div = document.createElement('div');
+                div.className = 'base-pair';
+                
+                // Position Logic
+                const yPos = (i / totalPairs) * height - (height / 2);
+                const rotation = i * 10; // Rotation Angle
+                const delay = i * 0.5;  // Animation Delay
+
+                div.style.transform = `translate(-50%, ${yPos}px) rotateY(${rotation}deg)`;
+                
+                // Animation Logic
+                div.animate([
+                    { transform: `translate(-50%, ${yPos}px) rotateY(${rotation}deg)` },
+                    { transform: `translate(-50%, ${yPos}px) rotateY(${rotation + 360}deg)` }
+                ], {
+                    duration: 15000, 
+                    iterations: Infinity,
+                    delay: -delay * 500
+                });
+
+                container.appendChild(div);
+            }
+        });
+    </script>
 
     <nav class="border-b border-gray-200 dark:border-slate-800 p-6 sticky top-0 z-40 bg-white/70 dark:bg-slate-950/70 backdrop-blur-md">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
@@ -59,6 +93,7 @@
 
     <main class="max-w-7xl mx-auto px-6 pb-20 flex-grow z-10">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            
             <a href="tools/dna-converter.html" class="glass-card rounded-2xl p-8 group cursor-pointer block relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150"></div>
                 <div class="p-3 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl w-fit text-3xl mb-4 tool-icon">🧪</div>
@@ -83,7 +118,7 @@
                 <div class="text-pink-500 font-mono text-sm font-bold flex items-center gap-2 group-hover:translate-x-2 transition">Launch →</div>
             </a>
             
-             <a href="tools/reverse.html" class="glass-card rounded-2xl p-8 group cursor-pointer block relative overflow-hidden">
+            <a href="tools/reverse.html" class="glass-card rounded-2xl p-8 group cursor-pointer block relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150"></div>
                 <div class="p-3 bg-purple-100 dark:bg-purple-900/40 rounded-xl w-fit text-3xl mb-4 tool-icon">🔄</div>
                 <h3 class="text-2xl font-bold mb-2 group-hover:text-purple-400 transition">Rev-Comp Gen</h3>
@@ -94,7 +129,6 @@
     </main>
 
     <script>
-        // Theme Logic
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
@@ -112,6 +146,7 @@
             updateIcons();
         }
     </script>
+    
     <script src="js/nexus-widget.js"></script>
 </body>
 </html>
