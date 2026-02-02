@@ -11,26 +11,64 @@ body {
 }
 
 /* --- 1. THE GRID (Fixed visibility) --- */
-.sci-fi-grid {
+/* --- ORGANIC BLURRED BACKGROUND (The New Plan) --- */
+
+/* Container for the background elements */
+.bio-bg-container {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    z-index: -2;
-    background-image: 
-        linear-gradient(rgba(16, 185, 129, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(16, 185, 129, 0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    mask-image: linear-gradient(to bottom, transparent, 10%, black, 90%, transparent);
-    pointer-events: none;
+    overflow: hidden;
+    z-index: -1; /* Behind everything */
+    pointer-events: none; /* Won't interfere with clicks */
 }
 
-/* Background Blobs */
+/* Shared style for all blobs */
 .bio-blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(100px);
-    opacity: 0.3;
-    z-index: -1;
-    animation: float 15s infinite alternate;
+    filter: blur(130px); /* மிக அதிக Blur - இதுதான் அந்த Smooth Effect தரும் */
+    opacity: 0.4; /* லேசாகத் தெரிந்தால் போதும் */
+    mix-blend-mode: screen; /* நிறங்கள் ஒன்றாகக் கலக்க */
+    animation: float-blob 25s infinite alternate ease-in-out;
+}
+
+/* Individual Blob Customization */
+/* 1. Top Left - Emerald Green */
+.blob-1 {
+    top: -15%;
+    left: -15%;
+    width: 600px;
+    height: 600px;
+    background: rgba(16, 185, 129, 0.5);
+    animation-delay: 0s;
+}
+
+/* 2. Bottom Right - Bio Blue */
+.blob-2 {
+    bottom: -15%;
+    right: -15%;
+    width: 700px;
+    height: 700px;
+    background: rgba(59, 130, 246, 0.5);
+    animation-delay: -5s;
+}
+
+/* 3. Center - Subtle Purple/Pink accent */
+.blob-3 {
+    top: 50%;
+    left: 50%;
+    width: 500px;
+    height: 500px;
+    background: rgba(139, 92, 246, 0.4);
+    transform: translate(-50%, -50%);
+    animation-delay: -10s;
+}
+
+/* Smooth Floating Animation */
+@keyframes float-blob {
+    0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+    50% { transform: translate(50px, 30px) scale(1.1) rotate(180deg); }
+    100% { transform: translate(-30px, -50px) scale(1.05) rotate(360deg); }
 }
 @keyframes float { 0% { transform: translate(0,0); } 100% { transform: translate(20px, -20px); } }
 
