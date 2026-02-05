@@ -35,21 +35,19 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const container = document.getElementById('helix-wrapper');
-            const totalPairs = 45; // வரிகளின் எண்ணிக்கை
-            const height = 1400;   // DNA உயரம்
+            const totalPairs = 45; 
+            const height = 1400; 
 
             for (let i = 0; i < totalPairs; i++) {
                 const div = document.createElement('div');
                 div.className = 'base-pair';
                 
-                // Position Logic
                 const yPos = (i / totalPairs) * height - (height / 2);
-                const rotation = i * 10; // Rotation Angle
-                const delay = i * 0.5;  // Animation Delay
+                const rotation = i * 10; 
+                const delay = i * 0.5; 
 
                 div.style.transform = `translate(-50%, ${yPos}px) rotateY(${rotation}deg)`;
                 
-                // Animation Logic
                 div.animate([
                     { transform: `translate(-50%, ${yPos}px) rotateY(${rotation}deg)` },
                     { transform: `translate(-50%, ${yPos}px) rotateY(${rotation + 360}deg)` }
@@ -125,6 +123,15 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Generate Reverse & Complement strands.</p>
                 <div class="text-purple-500 font-mono text-sm font-bold flex items-center gap-2 group-hover:translate-x-2 transition">Launch →</div>
             </a>
+
+            <a href="tools/species-explorer.html" class="glass-card rounded-2xl p-8 group cursor-pointer block relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-yellow-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150"></div>
+                <div class="p-3 bg-yellow-100 dark:bg-yellow-900/40 rounded-xl w-fit text-3xl mb-4 tool-icon">🦜</div>
+                <h3 class="text-2xl font-bold mb-2 group-hover:text-yellow-400 transition">Species Explorer</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Explore wildlife images & sounds (GBIF & Xeno-canto).</p>
+                <div class="text-yellow-500 font-mono text-sm font-bold flex items-center gap-2 group-hover:translate-x-2 transition">Launch →</div>
+            </a>
+
         </div>
     </main>
 
