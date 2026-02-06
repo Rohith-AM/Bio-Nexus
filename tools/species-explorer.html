@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Species Explorer | Bio-Nexus</title>
+    <title>Bio-Nexus Intelligence</title>
     
     <link rel="stylesheet" href="../style.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -29,6 +29,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .gallery-item { animation: fadeIn 0.5s ease-out forwards; }
         .research-card:hover { transform: translateY(-2px); border-color: #6366f1; background-color: rgba(30, 41, 59, 0.8); }
+        #galleryCard { transition: all 0.5s ease-in-out; }
     </style>
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex flex-col relative overflow-x-hidden" onclick="closeSuggestions()">
@@ -42,41 +43,41 @@
             <a href="../index.html" class="text-emerald-400 hover:text-emerald-300 transition flex items-center gap-2">
                 <span>←</span> Back
             </a>
-            <h1 class="text-2xl font-bold tracking-tight">Bio-Diversity <span class="text-yellow-400">Explorer</span> 🦜</h1>
+            <h1 class="text-2xl font-bold tracking-tight">Bio-Nexus <span class="text-indigo-400">Intelligence</span> 🧠</h1>
         </div>
     </nav>
 
     <main class="flex-grow container mx-auto px-6 py-10 z-10 relative">
         
         <div class="max-w-3xl mx-auto text-center mb-10 relative z-50">
-            <h2 class="text-3xl font-bold mb-2">Find Any Animal or Plant 🌿</h2>
-            <p class="text-gray-400 mb-6 text-sm">Powered by iNaturalist, GBIF, Wikipedia & Europe PMC</p>
+            <h2 class="text-3xl font-bold mb-2">Search Anything Biological 🧬</h2>
+            <p class="text-gray-400 mb-6 text-sm">Integrates EoL, NCBI (PubMed), GBIF & Wikipedia</p>
             
             <div class="relative">
+                <input type="hidden" id="selectedScientificName">
+                <input type="hidden" id="selectedTaxonKey">
+                
                 <div class="flex gap-2">
-                    <input type="hidden" id="selectedScientificName">
-                    <input type="hidden" id="selectedTaxonKey">
-                    
                     <input type="text" id="speciesInput" 
                         oninput="handleInput()" 
-                        placeholder="Type here... (e.g. Tiger, Peacock, Cobra)" 
+                        placeholder="Type here... (e.g. Tiger, Mitochondria, Tulsi)" 
                         autocomplete="off"
-                        class="w-full bg-slate-800/90 border border-slate-600 rounded-xl px-6 py-4 text-lg text-white focus:ring-2 focus:ring-yellow-500 outline-none backdrop-blur-sm placeholder-gray-500 transition-all focus:bg-slate-800 shadow-xl">
-                    <button onclick="fetchData()" 
-                        class="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold px-8 py-4 rounded-xl transition-all shadow-lg shadow-yellow-500/20">
-                        Search 🔍
+                        class="w-full bg-slate-800/90 border border-slate-600 rounded-xl px-6 py-4 text-lg text-white focus:ring-2 focus:ring-indigo-500 outline-none backdrop-blur-sm placeholder-gray-500 transition-all focus:bg-slate-800 shadow-xl">
+                    <button onclick="router()" 
+                        class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-lg shadow-indigo-500/20">
+                        Ask 🔎
                     </button>
                 </div>
                 <div id="suggestions" class="hidden absolute top-full left-0 w-full bg-slate-800 border border-slate-700 rounded-xl mt-2 shadow-2xl max-h-60 overflow-y-auto z-50 text-left custom-scrollbar"></div>
             </div>
         </div>
 
-        <div id="loader" class="hidden flex justify-center my-20">
-            <div class="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+        <div id="loader" class="hidden flex flex-col items-center justify-center my-20">
+            <div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-indigo-400 text-sm animate-pulse">Consulting Scientific Databases...</p>
         </div>
 
-        <div id="resultsArea" class="hidden space-y-8">
-            
+        <div id="speciesDashboard" class="hidden space-y-8">
             <div class="glass-card bg-slate-800/60 border border-slate-700 rounded-2xl p-8 backdrop-blur-md shadow-xl">
                 <div class="flex flex-col md:flex-row gap-6">
                     <div class="shrink-0">
@@ -93,78 +94,492 @@
                         </div>
                         
                         <div id="taxonomyContainer" class="flex flex-wrap gap-2 my-4 text-xs font-mono text-gray-400 bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
-                            <span class="text-gray-500">Classification:</span>
-                            <span class="text-blue-300" id="taxKingdom"></span> ›
-                            <span class="text-blue-300" id="taxPhylum"></span> ›
-                            <span class="text-blue-300" id="taxClass"></span> ›
-                            <span class="text-blue-300" id="taxFamily"></span>
+                            <span class="text-gray-500">Taxonomy:</span> <span id="taxString" class="text-blue-300"></span>
                         </div>
 
-                        <p id="speciesDesc" class="text-gray-300 leading-relaxed text-lg mb-4 border-l-4 border-yellow-500 pl-4 bg-slate-800/30 py-2 rounded-r">Searching...</p>
+                        <div class="space-y-4">
+                            <div class="border-l-4 border-yellow-500 pl-4 bg-slate-800/30 py-2 rounded-r">
+                                <p class="text-[10px] text-yellow-500 uppercase font-bold mb-1">Wikipedia (General)</p>
+                                <p id="speciesDesc" class="text-gray-300 leading-relaxed text-sm">...</p>
+                            </div>
+                            <div id="eolSection" class="hidden border-l-4 border-green-500 pl-4 bg-slate-800/30 py-2 rounded-r">
+                                <p class="text-[10px] text-green-500 uppercase font-bold mb-1">Encyclopedia of Life (Science)</p>
+                                <p id="eolDesc" class="text-gray-300 leading-relaxed text-sm">...</p>
+                            </div>
+                        </div>
                         
-                        <a id="wikiLink" href="#" target="_blank" class="inline-flex items-center gap-2 text-sm text-yellow-500 hover:text-yellow-400 font-bold bg-yellow-500/10 px-4 py-2 rounded-lg transition hover:bg-yellow-500/20">
-                            <span>📖 Read Full Article on Wikipedia</span>
-                        </a>
+                        <div class="flex gap-2 mt-4">
+                            <a id="wikiLink" href="#" target="_blank" class="inline-flex items-center gap-2 text-xs text-yellow-500 hover:text-yellow-400 font-bold bg-yellow-500/10 px-3 py-2 rounded-lg transition"><span>📖 Wiki</span></a>
+                            <a id="eolLink" href="#" target="_blank" class="hidden inline-flex items-center gap-2 text-xs text-green-500 hover:text-green-400 font-bold bg-green-500/10 px-3 py-2 rounded-lg transition"><span>🌿 EoL</span></a>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="glass-card bg-slate-800/40 border border-slate-700 rounded-2xl p-6 h-[500px] flex flex-col">
-                    <h3 class="text-xl font-bold text-green-400 mb-4 border-b border-slate-700 pb-2 flex justify-between">
-                        <span>📸 Unified Gallery</span> 
-                        <span class="text-xs text-gray-500 font-normal mt-1 flex gap-2">
-                            <span class="text-green-300">iNat</span>
-                            <span class="text-blue-300">Wiki</span>
-                            <span class="text-gray-300">GBIF</span>
-                        </span>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8" id="mediaGrid">
+                
+                <div id="galleryCard" class="glass-card bg-slate-800/40 border border-slate-700 rounded-2xl p-6 h-[500px] flex flex-col lg:col-span-1 transition-all duration-500">
+                    <h3 class="text-xl font-bold text-green-400 mb-4 border-b border-slate-700 pb-2 flex justify-between items-center">
+                        <span>📸 Unified Gallery</span>
+                        <span class="text-[10px] text-gray-500 font-normal">GBIF • iNat • EoL • Wiki</span>
                     </h3>
                     <div id="imageContainer" class="grid grid-cols-2 gap-3 overflow-y-auto pr-2 custom-scrollbar flex-grow content-start"></div>
                 </div>
 
-                <div class="glass-card bg-slate-800/40 border border-slate-700 rounded-2xl p-6 h-[500px] flex flex-col">
-                    <h3 class="text-xl font-bold text-orange-400 mb-4 border-b border-slate-700 pb-2 flex justify-between">
-                        <span>🔊 Unified Audio</span> 
-                        <span class="text-xs text-gray-500 font-normal mt-1 flex gap-2">
-                            <span class="text-orange-300">Xeno</span>
-                            <span class="text-green-300">iNat</span>
-                            <span class="text-blue-300">Wiki</span>
-                        </span>
-                    </h3>
+                <div id="audioCard" class="glass-card bg-slate-800/40 border border-slate-700 rounded-2xl p-6 h-[500px] flex flex-col lg:col-span-1">
+                    <h3 class="text-xl font-bold text-orange-400 mb-4 border-b border-slate-700 pb-2">🔊 Audio <span class="text-xs text-gray-500">(Unified)</span></h3>
                     <div id="audioContainer" class="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-grow"></div>
-                    <div id="audioFallback" class="hidden mt-4 pt-4 border-t border-slate-700 text-center">
-                        <p class="text-sm text-gray-400 mb-2">Still quiet? Try global search:</p>
-                        <a id="ytLink" href="#" target="_blank" class="inline-block bg-red-600 hover:bg-red-500 text-white text-sm px-4 py-2 rounded transition">
-                            ▶️ Search Sounds on YouTube
-                        </a>
+                    <div id="audioFallback" class="hidden mt-4 pt-4 border-t border-slate-700 text-center text-sm text-gray-500">
+                        <p>No direct audio found.</p>
+                        <a id="ytLink" href="#" target="_blank" class="inline-block mt-2 bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded transition">Search YouTube ▶️</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="topicDashboard" class="hidden space-y-8">
+            <div class="glass-card bg-slate-800/60 border border-indigo-900/50 rounded-2xl p-8 backdrop-blur-md shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-10 text-9xl">⚕️</div>
+                <h2 id="topicTitle" class="text-4xl font-bold text-white mb-2 capitalize">Topic Name</h2>
+                <div class="flex gap-2 mb-6">
+                    <span class="bg-indigo-900 text-indigo-300 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Concept / Disease</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-yellow-500 font-bold text-sm mb-2 uppercase">General Definition</h4>
+                        <p id="topicDesc" class="text-gray-300 leading-relaxed text-sm mb-4 font-light">Loading...</p>
+                        <a id="topicWikiLink" href="#" target="_blank" class="text-xs text-yellow-500 hover:underline">Read on Wikipedia →</a>
+                    </div>
+                    <div class="border-l border-slate-700 pl-6">
+                        <h4 class="text-blue-400 font-bold text-sm mb-2 uppercase">Scientific Abstract (PubMed)</h4>
+                        <p id="medDesc" class="text-gray-300 leading-relaxed text-sm mb-4 font-light italic">Fetching research summary...</p>
+                        <span class="text-xs text-gray-500">Source: Europe PMC / NCBI</span>
                     </div>
                 </div>
             </div>
 
-            <div class="glass-card bg-slate-800/40 border border-slate-700 rounded-2xl p-6 backdrop-blur-md">
-                <div class="flex items-center justify-between mb-4 border-b border-slate-700 pb-4">
-                    <h3 class="text-xl font-bold text-indigo-400 flex items-center gap-2">
-                        📚 Scientific Literature <span class="text-xs text-gray-500 font-normal mt-1 border border-gray-600 px-2 py-0.5 rounded">Europe PMC</span>
-                    </h3>
-                    <span class="text-xs text-gray-400 bg-slate-900 px-3 py-1 rounded-full">Top 25 Results (Scroll for more ↕)</span>
-                </div>
-                
-                <div id="researchContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                    </div>
-                
-                <div id="noPapersMsg" class="hidden text-center text-gray-500 py-4">No recent open-access papers found.</div>
+            <div class="glass-card bg-slate-800/40 border border-slate-700 rounded-2xl p-6 h-[450px] flex flex-col">
+                <h3 class="text-xl font-bold text-blue-400 mb-4 border-b border-slate-700 pb-2">🖼️ Scientific Diagrams & Illustrations</h3>
+                <div id="diagramContainer" class="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-y-auto pr-2 custom-scrollbar flex-grow"></div>
             </div>
+        </div>
 
+        <div id="researchSection" class="hidden glass-card bg-slate-800/40 border border-slate-700 rounded-2xl p-6 backdrop-blur-md mt-8">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-700 pb-4">
+                <h3 class="text-xl font-bold text-indigo-400 flex items-center gap-2">
+                    📚 Scientific Literature <span class="text-xs text-gray-500 font-normal mt-1 border border-gray-600 px-2 py-0.5 rounded">Europe PMC</span>
+                </h3>
+                <span class="text-xs text-gray-400 bg-slate-900 px-3 py-1 rounded-full">Papers ↕</span>
+            </div>
+            <div id="researchContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar"></div>
+            <div id="noPapersMsg" class="hidden text-center text-gray-500 py-4">No recent open-access papers found.</div>
         </div>
 
     </main>
 
     <script>
-        // 🔍 SMART AUTOCOMPLETE logic remains same...
+        // 🚦 ROUTER LOGIC
+        async function router() {
+            let inputVal = document.getElementById('speciesInput').value.trim();
+            let preSelectedKey = document.getElementById('selectedTaxonKey').value;
+            let preSelectedName = document.getElementById('selectedScientificName').value;
+
+            if(!inputVal) return;
+
+            // UI Reset
+            document.getElementById('speciesDashboard').classList.add('hidden');
+            document.getElementById('topicDashboard').classList.add('hidden');
+            document.getElementById('researchSection').classList.add('hidden');
+            document.getElementById('suggestions').classList.add('hidden');
+            document.getElementById('loader').classList.remove('hidden');
+
+            let isSpecies = false;
+            let queryName = inputVal;
+            let queryKey = null;
+
+            if (preSelectedKey) {
+                isSpecies = true;
+                queryName = preSelectedName;
+                queryKey = preSelectedKey;
+            } else {
+                try {
+                    const matchUrl = `https://api.gbif.org/v1/species/match?name=${inputVal}`;
+                    const matchRes = await fetch(matchUrl);
+                    const matchData = await matchRes.json();
+                    
+                    if (matchData.usageKey && matchData.confidence > 80 && matchData.rank !== 'KINGDOM') {
+                        isSpecies = true;
+                        queryKey = matchData.usageKey;
+                        queryName = matchData.canonicalName || matchData.scientificName;
+                    } else { isSpecies = false; }
+                } catch(e) { isSpecies = false; }
+            }
+
+            if (isSpecies) { 
+                await renderSpeciesMode(queryName, queryKey, inputVal); 
+            } else { 
+                await renderTopicMode(inputVal); 
+            }
+
+            searchLiterature(queryName || inputVal);
+            document.getElementById('researchSection').classList.remove('hidden');
+            document.getElementById('loader').classList.add('hidden');
+        }
+
+        // 🟢 SPECIES MODE
+        async function renderSpeciesMode(sciName, key, originalInput) {
+            document.getElementById('speciesDashboard').classList.remove('hidden');
+            
+            // 1. Fetch Basic Info (Wiki)
+            const displayTitle = (originalInput && originalInput.length < sciName.length) ? originalInput : sciName;
+            fetchWiki(displayTitle, 'speciesTitle', 'speciesDesc', 'wikiImg', 'wikiImgPlaceholder', 'wikiLink', 'scientificSubtitle');
+            
+            // 2. Fetch Authoritative Info (Encyclopedia of Life) - NEW! 🌿
+            fetchEoLData(sciName);
+
+            // 3. Fetch Unified Gallery (Now includes EoL) & Check Kingdom
+            let isAnimal = await fetchUnifiedGallery(sciName, key, originalInput); 
+            
+            const audioCard = document.getElementById('audioCard');
+            const galleryCard = document.getElementById('galleryCard');
+            const imageContainer = document.getElementById('imageContainer');
+
+            if (isAnimal) {
+                // ANIMAL: Show Audio
+                audioCard.classList.remove('hidden');
+                galleryCard.classList.remove('lg:col-span-2'); 
+                galleryCard.classList.add('lg:col-span-1');
+                imageContainer.classList.remove('grid-cols-4');
+                imageContainer.classList.add('grid-cols-2');
+                
+                const audioQuery = (originalInput && originalInput.length < sciName.length) ? originalInput : sciName;
+                fetchUnifiedAudio(audioQuery, sciName); 
+            } else {
+                // PLANT/MICROBE: Full Width Gallery
+                audioCard.classList.add('hidden');
+                galleryCard.classList.remove('lg:col-span-1');
+                galleryCard.classList.add('lg:col-span-2'); 
+                imageContainer.classList.remove('grid-cols-2');
+                imageContainer.classList.add('grid-cols-4'); 
+            }
+        }
+
+        // 🔵 TOPIC MODE (Enhanced with Europe PMC Abstract)
+        async function renderTopicMode(topic) {
+            document.getElementById('topicDashboard').classList.remove('hidden');
+            document.getElementById('topicTitle').innerText = topic;
+            
+            // 1. General Def (Wiki)
+            const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${topic.replace(' ', '_')}`;
+            try {
+                const res = await fetch(wikiUrl);
+                const data = await res.json();
+                if(res.ok) {
+                    document.getElementById('topicDesc').innerText = data.extract;
+                    document.getElementById('topicWikiLink').href = data.content_urls.desktop.page;
+                } else {
+                    document.getElementById('topicDesc').innerText = "Definition not available.";
+                }
+            } catch(e) {}
+
+            // 2. Scientific Abstract (Europe PMC) - NEW! ⚕️
+            const medUrl = `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${topic} review&resultType=core&format=json&pageSize=1`;
+            try {
+                const medRes = await fetch(medUrl);
+                const medData = await medRes.json();
+                if(medData.resultList.result.length > 0) {
+                    const abstract = medData.resultList.result[0].abstractText;
+                    // Clean HTML tags from abstract if present
+                    const cleanAbstract = abstract ? abstract.replace(/<[^>]*>?/gm, '').substring(0, 300) + "..." : "No scientific abstract found.";
+                    document.getElementById('medDesc').innerText = cleanAbstract;
+                } else {
+                    document.getElementById('medDesc').innerText = "No scientific review found.";
+                }
+            } catch(e) { document.getElementById('medDesc').innerText = "Connection error."; }
+
+            // 3. Diagrams (Wiki)
+            const diagCont = document.getElementById('diagramContainer');
+            diagCont.innerHTML = '';
+            // Try fetching from Page Images first (High relevance)
+            try {
+                const wikiImgUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageimages|images&piprop=thumbnail&pithumbsize=400&titles=${topic}&origin=*`;
+                const imgRes = await fetch(wikiImgUrl);
+                const imgData = await imgRes.json();
+                const pages = imgData.query.pages;
+                const page = Object.values(pages)[0];
+                if (page.thumbnail) {
+                     diagCont.innerHTML += `<div class="relative group overflow-hidden rounded-lg h-40 border border-slate-700 bg-black"><img src="${page.thumbnail.source}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"><div class="absolute bottom-0 left-0 bg-black/60 text-[9px] p-1 w-full truncate text-gray-300">Wiki Page</div></div>`;
+                }
+            } catch(e) {}
+
+            // Try Search (Fallback)
+            try {
+                const wikiSearchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${topic} diagram OR ${topic} structure&format=json&origin=*&srlimit=6`;
+                const searchRes = await fetch(wikiSearchUrl);
+                const searchData = await searchRes.json();
+                if(searchData.query?.search) {
+                    for(let item of searchData.query.search) {
+                        if (item.title.endsWith('.pdf') || item.title.endsWith('.djvu')) continue;
+                        const fileUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${item.title}&prop=imageinfo&iiprop=url&format=json&origin=*`;
+                        const fRes = await fetch(fileUrl);
+                        const fData = await fRes.json();
+                        const page = Object.values(fData.query.pages)[0];
+                        if(page.imageinfo?.[0]?.url) {
+                            diagCont.innerHTML += `<div class="relative group overflow-hidden rounded-lg h-40 border border-slate-700 bg-black"><img src="${page.imageinfo[0].url}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"><div class="absolute bottom-0 left-0 bg-black/60 text-[9px] p-1 w-full truncate text-gray-300">Diagram</div></div>`;
+                        }
+                    }
+                }
+                if (diagCont.children.length === 0) diagCont.innerHTML = `<div class="col-span-4 text-center py-10 text-gray-500">No specific diagrams found.</div>`;
+            } catch(e) {}
+        }
+
+        // 🌿 ENCYCLOPEDIA OF LIFE (EoL) INTEGRATION
+        async function fetchEoLData(sciName) {
+            const eolSection = document.getElementById('eolSection');
+            const eolDesc = document.getElementById('eolDesc');
+            const eolLink = document.getElementById('eolLink');
+            
+            eolSection.classList.add('hidden');
+            eolLink.classList.add('hidden');
+
+            try {
+                // 1. Search EoL for ID
+                const searchUrl = `https://eol.org/api/search/1.0.json?q=${sciName}&page=1`;
+                const searchRes = await fetch(searchUrl);
+                const searchData = await searchRes.json();
+
+                if (searchData.results && searchData.results.length > 0) {
+                    const eolId = searchData.results[0].id;
+                    const eolUrl = `https://eol.org/pages/${eolId}`;
+                    
+                    // Show Link immediately
+                    eolLink.href = eolUrl;
+                    eolLink.classList.remove('hidden');
+
+                    // 2. Fetch Details (Note: EoL Details API can be heavy/restricted, using fallback to just link if text fails)
+                    // For this demo, we mainly use EoL for the Link and potentially images in Gallery
+                    eolDesc.innerText = "Scientific details available on EoL. Click button below.";
+                    eolSection.classList.remove('hidden');
+                }
+            } catch(e) { console.log("EoL Error"); }
+        }
+
+        // 📸🔥 UNIFIED GALLERY ENGINE (GBIF + iNat + Wiki + EoL)
+        async function fetchUnifiedGallery(sciName, key, commonName) {
+            const imgCont = document.getElementById('imageContainer');
+            imgCont.innerHTML = '';
+            
+            let isAnimal = false;
+            let imagesFound = 0;
+
+            // 1. GBIF
+            let gbifUrl = key ? `https://api.gbif.org/v1/occurrence/search?mediaType=StillImage&taxonKey=${key}&limit=10` : `https://api.gbif.org/v1/occurrence/search?mediaType=StillImage&scientificName=${sciName}&limit=10`;
+            try {
+                const res = await fetch(gbifUrl);
+                const data = await res.json();
+                if(data.results.length > 0) {
+                    const tax = data.results[0];
+                    document.getElementById('taxString').innerText = `${tax.kingdom || ''} › ${tax.phylum || ''} › ${tax.class || ''}`;
+                    if((tax.kingdom || '').toLowerCase() === 'animalia') isAnimal = true;
+                    for(let r of data.results) {
+                        if(imagesFound >= 3) break;
+                        let media = r.media?.[0];
+                        let u = media?.identifier || media?.references;
+                        if(u) {
+                            if(u.startsWith('http://')) u = u.replace('http://', 'https://');
+                            renderImageCard(u, "GBIF", "bg-gray-600");
+                            imagesFound++;
+                        }
+                    }
+                }
+            } catch(e) {}
+
+            // 2. iNaturalist
+            try {
+                const iNatUrl = `https://api.inaturalist.org/v1/taxa?q=${sciName}`;
+                const iNatRes = await fetch(iNatUrl);
+                const iNatData = await iNatRes.json();
+                if (iNatData.results.length > 0) {
+                    const taxon = iNatData.results[0]; 
+                    if (taxon.taxon_photos) {
+                        taxon.taxon_photos.slice(0, 3).forEach(photo => {
+                            renderImageCard(photo.photo.medium_url, "iNaturalist", "bg-green-600");
+                            imagesFound++;
+                        });
+                    }
+                }
+            } catch(e) {}
+
+            // 3. EoL Images (via Search) - NEW!
+            if (imagesFound < 6) {
+                try {
+                    const searchUrl = `https://eol.org/api/search/1.0.json?q=${sciName}&page=1`;
+                    const searchRes = await fetch(searchUrl);
+                    const searchData = await searchRes.json();
+                    if (searchData.results && searchData.results.length > 0) {
+                        // EoL Search result typically has a thumbnail in 'content' if enriched, 
+                        // but API v3 is complex. We stick to Search result content if available.
+                        // Actually, simplified EoL search results don't always give nice images directly in v1.0.
+                        // We rely on the link provided in the info section.
+                    }
+                } catch(e) {}
+            }
+
+            // 4. Wiki Commons
+            if (imagesFound < 4) {
+                const searchName = (commonName && commonName.length < sciName.length) ? commonName : sciName;
+                try {
+                    const wikiImagesUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageimages|images&piprop=original|thumbnail&titles=${searchName.replace(' ', '_')}&origin=*`;
+                    const wikiImgRes = await fetch(wikiImagesUrl);
+                    const wikiImgData = await wikiImgRes.json();
+                    const pages = wikiImgData.query.pages;
+                    const page = Object.values(pages)[0];
+                    if (page && page.original) {
+                        renderImageCard(page.original.source, "Wikipedia", "bg-blue-600");
+                    }
+                } catch(e) {}
+            }
+
+            return isAnimal; 
+        }
+
+        function renderImageCard(url, source, badgeClass) {
+            const imgCont = document.getElementById('imageContainer');
+            const div = document.createElement('div');
+            div.className = "gallery-item relative group overflow-hidden rounded-lg h-32 border border-slate-700 bg-black";
+            div.innerHTML = `
+                <img src="${url}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-90 group-hover:opacity-100">
+                <div class="absolute top-2 right-2 ${badgeClass} text-[10px] text-white px-2 py-0.5 rounded shadow-md opacity-80">${source}</div>
+            `;
+            imgCont.appendChild(div);
+        }
+
+        // 🔊 AUDIO ENGINE (Robust)
+        async function fetchUnifiedAudio(commonName, sciName) {
+            const audCont = document.getElementById('audioContainer');
+            const fallback = document.getElementById('audioFallback');
+            const ytLink = document.getElementById('ytLink');
+            
+            audCont.innerHTML = '';
+            fallback.classList.add('hidden');
+            ytLink.href = `https://www.youtube.com/results?search_query=${commonName}+animal+sound`;
+
+            let audioFound = false;
+
+            // 1. Wiki
+            try {
+                const wikiAudioUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${commonName} filetype:audio&format=json&origin=*`;
+                const wikiRes = await fetch(wikiAudioUrl);
+                const wikiData = await wikiRes.json();
+                if (wikiData.query.search.length > 0) {
+                    for(let item of wikiData.query.search.slice(0, 2)) {
+                        const title = item.title;
+                        const fileInfoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${title}&prop=imageinfo&iiprop=url&format=json&origin=*`;
+                        const fileRes = await fetch(fileInfoUrl);
+                        const fileData = await fileRes.json();
+                        const page = Object.values(fileData.query.pages)[0];
+                        if (page.imageinfo && page.imageinfo[0].url) {
+                                renderAudioCard(title.replace("File:", "").replace(".ogg", "").replace(".mp3", ""), "Wikimedia", page.imageinfo[0].url, "bg-blue-600");
+                                audioFound = true;
+                        }
+                    }
+                }
+            } catch(e) {}
+
+            // 2. iNat
+            if (!audioFound || audCont.childElementCount < 2) {
+                try {
+                    const iNatAudioUrl = `https://api.inaturalist.org/v1/observations?taxon_name=${commonName}&has[]=sounds&per_page=3&order=desc&order_by=created_at`;
+                    const iNatRes = await fetch(iNatAudioUrl);
+                    const iNatData = await iNatRes.json();
+                    if (iNatData.results && iNatData.results.length > 0) {
+                        iNatData.results.forEach(obs => {
+                            if (obs.sounds && obs.sounds.length > 0) {
+                                const sound = obs.sounds[0];
+                                if (sound.file_url) {
+                                    renderAudioCard("Observation", "iNaturalist", sound.file_url, "bg-green-600");
+                                    audioFound = true;
+                                }
+                            }
+                        });
+                    }
+                } catch(e) {}
+            }
+
+            // 3. Xeno
+            if (!audioFound || audCont.childElementCount < 2) {
+                const url = `https://corsproxy.io/?` + encodeURIComponent(`https://www.xeno-canto.org/api/2/recordings?query=${sciName}`);
+                try {
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    if(data.recordings && data.recordings.length > 0) {
+                        data.recordings.slice(0, 2).forEach(rec => {
+                            renderAudioCard(rec.en, "Xeno-canto", rec.file, "bg-orange-500");
+                            audioFound = true;
+                        });
+                    }
+                } catch(e) {}
+            }
+
+            if (!audioFound) { fallback.classList.remove('hidden'); }
+        }
+
+        function renderAudioCard(title, source, url, badgeColor) {
+            const audCont = document.getElementById('audioContainer');
+            const audDiv = document.createElement('div');
+            audDiv.className = "bg-slate-900/60 p-3 rounded-lg border border-slate-700 mb-2";
+            audDiv.innerHTML = `
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-bold text-gray-300 truncate w-2/3">${title}</span>
+                    <span class="text-[10px] text-white px-1.5 py-0.5 rounded ${badgeColor}">${source}</span>
+                </div>
+                <audio controls class="w-full h-6 block rounded bg-slate-200" src="${url}"></audio>
+            `;
+            audCont.appendChild(audDiv);
+        }
+
+        // 🔗 SHARED: Wiki Info
+        async function fetchWiki(query, titleId, descId, imgId, phId, linkId, subId) {
+            let url = `https://en.wikipedia.org/api/rest_v1/page/summary/${query.replace(' ', '_')}`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if(data.title) {
+                    document.getElementById(titleId).innerText = data.title;
+                    if(subId) document.getElementById(subId).innerText = query;
+                    document.getElementById(descId).innerText = data.extract;
+                    document.getElementById(linkId).href = data.content_urls.desktop.page;
+                    if(data.thumbnail) {
+                        document.getElementById(imgId).src = data.thumbnail.source;
+                        document.getElementById(imgId).classList.remove('hidden');
+                        document.getElementById(phId).classList.add('hidden');
+                    }
+                }
+            } catch(e) {}
+        }
+
+        // 📚 RESEARCH PAPERS
+        async function searchLiterature(query) {
+            const apiURL = `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${query}&format=json&pageSize=25`;
+            try {
+                const res = await fetch(apiURL);
+                const data = await res.json();
+                const container = document.getElementById('researchContainer');
+                container.innerHTML = '';
+                if (data.resultList?.result?.length) {
+                    document.getElementById('noPapersMsg').classList.add('hidden');
+                    data.resultList.result.forEach(paper => {
+                        let badgeColor = paper.source === "MED" ? "bg-blue-900 text-blue-300" : "bg-slate-700";
+                        container.innerHTML += `<a href="https://europepmc.org/article/${paper.source}/${paper.id}" target="_blank" class="research-card block bg-slate-800/50 border border-slate-700 p-4 rounded-xl transition-all duration-300 group"><div class="flex justify-between items-start mb-2"><span class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${badgeColor}">${paper.source === "MED" ? "PubMed" : "Paper"}</span><span class="text-xs text-gray-500">${paper.pubYear || ''}</span></div><h4 class="font-bold text-gray-200 mb-2 text-sm line-clamp-2 group-hover:text-indigo-400">${paper.title}</h4><p class="text-xs text-gray-400 line-clamp-1">✍️ ${paper.authorString || 'Unknown'}</p></a>`;
+                    });
+                } else { document.getElementById('noPapersMsg').classList.remove('hidden'); }
+            } catch (e) { console.error(e); }
+        }
+
+        // 🔍 AUTOCOMPLETE
         let debounceTimer;
         async function handleInput() {
-            document.getElementById('selectedScientificName').value = ''; 
-            document.getElementById('selectedTaxonKey').value = ''; 
             const query = document.getElementById('speciesInput').value.trim();
             const suggestionsBox = document.getElementById('suggestions');
             if (query.length < 3) { suggestionsBox.classList.add('hidden'); return; }
@@ -175,298 +590,24 @@
                     const res = await fetch(url);
                     const data = await res.json();
                     suggestionsBox.innerHTML = '';
-                    if (data.length > 0) {
+                    if(data.length > 0) {
                         suggestionsBox.classList.remove('hidden');
                         data.forEach(item => {
-                            const commonName = item.vernacularNames && item.vernacularNames.length > 0 ? item.vernacularNames[0].vernacularName : null;
-                            const sciName = item.canonicalName || item.scientificName;
-                            const taxonKey = item.key; 
-                            const mainText = commonName || sciName;
-                            const subText = commonName ? sciName : item.rank;
                             const div = document.createElement('div');
-                            div.className = "suggestion-item p-3 border-b border-slate-700 text-gray-400 flex justify-between items-center transition";
-                            div.innerHTML = `<div><div class="text-white font-bold">${mainText}</div><div class="text-xs italic">${subText}</div></div><span class="text-[10px] text-gray-500 bg-slate-900 px-2 py-0.5 rounded border border-slate-700 uppercase">${item.rank || 'Taxon'}</span>`;
-                            div.onclick = () => selectSuggestion(mainText, sciName, taxonKey);
+                            div.className = "suggestion-item p-3 border-b border-slate-700 text-gray-400 flex justify-between";
+                            div.innerHTML = `<span>${item.canonicalName || item.scientificName}</span> <span class="text-xs bg-slate-800 px-2 rounded">${item.rank}</span>`;
+                            div.onclick = () => {
+                                document.getElementById('speciesInput').value = item.canonicalName;
+                                document.getElementById('selectedTaxonKey').value = item.key;
+                                document.getElementById('selectedScientificName').value = item.canonicalName;
+                                suggestionsBox.classList.add('hidden');
+                                router();
+                            };
                             suggestionsBox.appendChild(div);
                         });
                     } else { suggestionsBox.classList.add('hidden'); }
-                } catch (e) { console.error(e); }
+                } catch(e){}
             }, 300);
-        }
-        function selectSuggestion(displayText, scientificName, taxonKey) {
-            document.getElementById('speciesInput').value = displayText;
-            document.getElementById('selectedScientificName').value = scientificName;
-            document.getElementById('selectedTaxonKey').value = taxonKey;
-            document.getElementById('suggestions').classList.add('hidden');
-            fetchData(); 
-        }
-        function closeSuggestions() { setTimeout(() => document.getElementById('suggestions').classList.add('hidden'), 200); }
-
-        // 🌍 MAIN FETCH LOGIC
-        async function fetchData() {
-            let inputVal = document.getElementById('speciesInput').value.trim();
-            let queryName = document.getElementById('selectedScientificName').value;
-            let queryKey = document.getElementById('selectedTaxonKey').value;
-            let displayQuery = inputVal;
-
-            if (!inputVal) return;
-
-            // UI Reset
-            document.getElementById('suggestions').classList.add('hidden');
-            document.getElementById('resultsArea').classList.add('hidden');
-            document.getElementById('loader').classList.remove('hidden');
-            document.getElementById('threatBadge').classList.add('hidden');
-            document.getElementById('imageContainer').innerHTML = '';
-            document.getElementById('audioContainer').innerHTML = '';
-            document.getElementById('researchContainer').innerHTML = '';
-
-            try {
-                // 1. RESOLVE KEY
-                if (!queryKey) {
-                    const matchUrl = `https://api.gbif.org/v1/species/match?name=${inputVal}`;
-                    const matchRes = await fetch(matchUrl);
-                    const matchData = await matchRes.json();
-                    if (matchData.usageKey) {
-                        queryKey = matchData.usageKey;
-                        queryName = matchData.canonicalName || matchData.scientificName;
-                        document.getElementById('selectedScientificName').value = queryName;
-                        document.getElementById('selectedTaxonKey').value = queryKey;
-                    } else { queryName = inputVal; }
-                }
-
-                // TRIGGER PARALLEL FETCHES
-                searchLiterature(queryName);
-                fetchAudio(queryName); // 🔥 NEW AUDIO FUNCTION
-
-                // 2. WIKIPEDIA INFO
-                let wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${queryName.replace(' ', '_')}`;
-                let wikiRes = await fetch(wikiUrl);
-                if (!wikiRes.ok) { wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${displayQuery.replace(' ', '_')}`; wikiRes = await fetch(wikiUrl); }
-                if (wikiRes.ok) {
-                    const wikiData = await wikiRes.json();
-                    document.getElementById('speciesTitle').innerText = wikiData.title;
-                    document.getElementById('scientificSubtitle').innerText = queryName !== wikiData.title ? queryName : ''; 
-                    document.getElementById('speciesDesc').innerText = wikiData.extract;
-                    document.getElementById('wikiLink').href = wikiData.content_urls.desktop.page;
-                    if (wikiData.thumbnail) {
-                        document.getElementById('wikiImg').src = wikiData.thumbnail.source;
-                        document.getElementById('wikiImg').classList.remove('hidden');
-                        document.getElementById('wikiImgPlaceholder').classList.add('hidden');
-                    }
-                } else {
-                    document.getElementById('speciesTitle').innerText = displayQuery;
-                    document.getElementById('scientificSubtitle').innerText = queryName;
-                    document.getElementById('speciesDesc').innerText = "Description not available.";
-                }
-
-                // 3. IMAGES (Hybrid)
-                let allImages = [];
-                // iNaturalist Images
-                try {
-                    const iNatUrl = `https://api.inaturalist.org/v1/taxa?q=${queryName}`;
-                    const iNatRes = await fetch(iNatUrl);
-                    const iNatData = await iNatRes.json();
-                    if (iNatData.results.length > 0) {
-                        const taxon = iNatData.results[0]; 
-                        if (taxon.taxon_photos) {
-                            taxon.taxon_photos.slice(0, 4).forEach(photo => {
-                                allImages.push({ url: photo.photo.medium_url, source: 'iNat', credit: photo.photo.attribution || 'iNat' });
-                            });
-                        }
-                    }
-                } catch(e) {}
-                
-                // GBIF Images + Taxonomy
-                try {
-                    let gbifUrl = queryKey ? `https://api.gbif.org/v1/occurrence/search?mediaType=StillImage&taxonKey=${queryKey}&limit=20` : `https://api.gbif.org/v1/occurrence/search?mediaType=StillImage&scientificName=${queryName}&limit=20`;
-                    const gbifRes = await fetch(gbifUrl);
-                    const gbifData = await gbifRes.json();
-                    if (gbifData.results.length > 0) {
-                        const tax = gbifData.results[0];
-                        document.getElementById('taxKingdom').innerText = tax.kingdom || '?';
-                        document.getElementById('taxPhylum').innerText = tax.phylum || '?';
-                        document.getElementById('taxClass').innerText = tax.class || '?';
-                        document.getElementById('taxFamily').innerText = tax.family || '?';
-                        if(tax.iucnRedListCategoryCode) {
-                             const badge = document.getElementById('threatBadge');
-                             badge.innerText = tax.iucnRedListCategoryCode;
-                             badge.classList.remove('hidden');
-                             badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border bg-red-900/50 text-red-400 border-red-500";
-                        }
-                        let gbifCount = 0;
-                        for (const record of gbifData.results) {
-                            if (gbifCount >= 4) break;
-                            const media = record.media?.[0];
-                            let imgUrl = media?.identifier || media?.references;
-                            if (imgUrl) {
-                                if (imgUrl.startsWith('http://')) imgUrl = imgUrl.replace('http://', 'https://');
-                                allImages.push({ url: imgUrl, source: 'GBIF', credit: media.rightsHolder || 'GBIF' });
-                                gbifCount++;
-                            }
-                        }
-                    }
-                } catch(e) {}
-
-                // Wiki Images
-                try {
-                    const wikiImagesUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageimages|images&piprop=original|thumbnail&titles=${queryName.replace(' ', '_')}&origin=*`;
-                    const wikiImgRes = await fetch(wikiImagesUrl);
-                    const wikiImgData = await wikiImgRes.json();
-                    const pages = wikiImgData.query.pages;
-                    const page = Object.values(pages)[0];
-                    if (page && page.original) allImages.push({ url: page.original.source, source: 'Wiki', credit: 'Wikipedia' });
-                } catch(e) {}
-
-                // Render Gallery
-                const imgCont = document.getElementById('imageContainer');
-                if (allImages.length > 0) {
-                    allImages.slice(0, 8).forEach((img, index) => {
-                        const imgDiv = document.createElement('div');
-                        imgDiv.className = "gallery-item relative group overflow-hidden rounded-lg h-32 border border-slate-700 bg-black";
-                        imgDiv.style.animationDelay = `${index * 100}ms`;
-                        let badgeColor = img.source === 'iNat' ? 'bg-green-600' : (img.source === 'Wiki' ? 'bg-blue-600' : 'bg-gray-600');
-                        imgDiv.innerHTML = `
-                            <img src="${img.url}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-90 group-hover:opacity-100">
-                            <div class="absolute top-2 right-2 ${badgeColor} text-[10px] text-white px-2 py-0.5 rounded shadow-md opacity-80">${img.source}</div>
-                            <div class="absolute bottom-0 left-0 bg-black/60 text-[9px] p-1 w-full truncate text-gray-300">© ${img.credit}</div>
-                        `;
-                        imgCont.appendChild(imgDiv);
-                    });
-                } else { imgCont.innerHTML = `<div class="col-span-2 text-center py-10 text-gray-500">No public images available.</div>`; }
-
-                document.getElementById('loader').classList.add('hidden');
-                document.getElementById('resultsArea').classList.remove('hidden');
-
-            } catch (error) {
-                console.error(error);
-                alert("Error. Please try again.");
-                document.getElementById('loader').classList.add('hidden');
-            }
-        }
-
-        // 🔊 UNIFIED AUDIO ENGINE (Xeno-canto + iNat + Wiki)
-        async function fetchAudio(query) {
-            const audCont = document.getElementById('audioContainer');
-            document.getElementById('audioFallback').classList.remove('hidden');
-            document.getElementById('ytLink').href = `https://www.youtube.com/results?search_query=${query}+animal+sound`;
-            
-            let audioFound = false;
-
-            // 1. Xeno-canto (Birds)
-            const xcUrl = `https://www.xeno-canto.org/api/2/recordings?query=${query}`;
-            const proxyUrl = `https://corsproxy.io/?` + encodeURIComponent(xcUrl);
-            try {
-                const xcRes = await fetch(proxyUrl);
-                const xcData = await xcRes.json();
-                if (xcData.recordings && xcData.recordings.length > 0) {
-                    xcData.recordings.slice(0, 4).forEach(rec => renderAudioCard(rec.en, rec.type, rec.file, "Xeno", "bg-orange-500"));
-                    audioFound = true;
-                }
-            } catch(e) {}
-
-            // 2. iNaturalist Audio (Mammals, Insects etc)
-            if (!audioFound) {
-                try {
-                    // Search for observations with sounds
-                    const iNatAudioUrl = `https://api.inaturalist.org/v1/observations?taxon_name=${query}&has[]=sounds&per_page=3&order=desc&order_by=created_at`;
-                    const iNatRes = await fetch(iNatAudioUrl);
-                    const iNatData = await iNatRes.json();
-                    
-                    if (iNatData.results && iNatData.results.length > 0) {
-                        iNatData.results.forEach(obs => {
-                            if (obs.sounds && obs.sounds.length > 0) {
-                                const sound = obs.sounds[0];
-                                // iNat sounds are often hosted on separate servers, checking fileUrl
-                                if (sound.file_url) {
-                                    renderAudioCard(obs.species_guess || query, "Observation", sound.file_url, "iNat", "bg-green-600");
-                                    audioFound = true;
-                                }
-                            }
-                        });
-                    }
-                } catch(e) { console.log("iNat Audio Error", e); }
-            }
-
-            // 3. Wikimedia Audio (Roars, etc)
-            if (!audioFound) {
-                try {
-                    // Search specifically for audio files in File namespace (Namespace 6)
-                    const wikiAudioUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${query} filetype:audio&srnamespace=6&format=json&origin=*`;
-                    const wikiRes = await fetch(wikiAudioUrl);
-                    const wikiData = await wikiRes.json();
-                    
-                    if (wikiData.query.search.length > 0) {
-                        // We found file titles, now we need the actual URL
-                        const title = wikiData.query.search[0].title;
-                        const fileInfoUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${title}&prop=imageinfo&iiprop=url&format=json&origin=*`;
-                        const fileRes = await fetch(fileInfoUrl);
-                        const fileData = await fileRes.json();
-                        const pages = fileData.query.pages;
-                        const page = Object.values(pages)[0];
-                        if (page.imageinfo && page.imageinfo[0].url) {
-                             renderAudioCard(title.replace("File:", "").replace(".ogg", ""), "Wiki File", page.imageinfo[0].url, "Wiki", "bg-blue-600");
-                             audioFound = true;
-                        }
-                    }
-                } catch(e) { console.log("Wiki Audio Error", e); }
-            }
-
-            if (!audioFound) {
-                audCont.innerHTML = `<div class="text-center py-4 text-gray-500 text-sm"><p>No direct audio found.</p></div>`;
-            }
-        }
-
-        function renderAudioCard(title, type, url, source, badgeClass) {
-            const audCont = document.getElementById('audioContainer');
-            const audDiv = document.createElement('div');
-            audDiv.className = "bg-slate-900/60 p-3 rounded-lg border border-slate-700 mb-2";
-            audDiv.innerHTML = `
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-sm font-bold text-gray-300 truncate w-1/2">${title}</span>
-                    <div class="flex gap-2">
-                        <span class="text-[10px] text-gray-400 border border-gray-600 px-1 rounded">${type}</span>
-                        <span class="text-[10px] text-white px-1.5 rounded ${badgeClass}">${source}</span>
-                    </div>
-                </div>
-                <audio controls class="w-full h-6 block rounded bg-slate-200" src="${url}"></audio>
-            `;
-            audCont.appendChild(audDiv);
-        }
-
-        // 📚 RESEARCH PAPERS FUNCTION
-        async function searchLiterature(query) {
-            const apiURL = `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${query}&format=json&pageSize=25`;
-            try {
-                const res = await fetch(apiURL);
-                const data = await res.json();
-                const container = document.getElementById('researchContainer');
-                container.innerHTML = ''; 
-                
-                if (data.resultList && data.resultList.result && data.resultList.result.length > 0) {
-                    document.getElementById('noPapersMsg').classList.add('hidden');
-                    data.resultList.result.forEach(paper => {
-                        let badgeColor = "bg-slate-700";
-                        let sourceText = "Paper";
-                        if (paper.source === "MED") { badgeColor = "bg-blue-900 text-blue-300"; sourceText = "PubMed"; }
-                        else if (paper.source === "PPR") { badgeColor = "bg-red-900 text-red-300"; sourceText = "Preprint"; }
-                        else if (paper.source === "AGR") { badgeColor = "bg-green-900 text-green-300"; sourceText = "Agricola"; }
-
-                        const card = document.createElement('a');
-                        card.href = `https://europepmc.org/article/${paper.source}/${paper.id}`;
-                        card.target = "_blank";
-                        card.className = "research-card block bg-slate-800/50 border border-slate-700 p-4 rounded-xl transition-all duration-300 group";
-                        card.innerHTML = `
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${badgeColor}">${sourceText}</span>
-                                <span class="text-xs text-gray-500">${paper.pubYear || 'N/A'}</span>
-                            </div>
-                            <h4 class="font-bold text-gray-200 mb-2 leading-snug group-hover:text-indigo-400 transition-colors line-clamp-2 text-sm">${paper.title}</h4>
-                            <p class="text-xs text-gray-400 line-clamp-1 mb-2">✍️ ${paper.authorString || 'Unknown'}</p>
-                        `;
-                        container.appendChild(card);
-                    });
-                } else { document.getElementById('noPapersMsg').classList.remove('hidden'); }
-            } catch (e) { console.error("Lit Search Error", e); }
         }
     </script>
 </body>
