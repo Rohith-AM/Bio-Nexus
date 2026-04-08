@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXORA | Virtual Agarose Gel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; border-radius: 4px;}
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
+        
+        /* Ultra-Realistic Gel Tank Styling */
+        .gel-tank {
+            background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .gel-lane { position: relative; height: 400px; width: 80px; }
+        .dna-band {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70%;
+            height: 4px;
+            border-radius: 2px;
+            transition: top 3s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.5s ease;
+            cursor: crosshair;
+        }
+        /* UV Glow Animation */
+        @keyframes uv-flicker {
+            0%, 100% { box-shadow: 0 0 15px currentColor, 0 0 5px currentColor inset; filter: brightness(1); }
+            50% { box-shadow: 0 0 25px currentColor, 0 0 10px currentColor inset; filter: brightness(1.2); }
+        }
+        .uv-active .dna-band { animation: uv-flicker 2s infinite; }
+    </style>
+</head>
+<body class="bg-slate-950 text-white font-sans min-h-screen flex flex-col relative overflow-x-hidden">
+
+    <div class="absolute inset-0 z-0 opacity-5 pointer-events-none" 
+         style="background-image: linear-gradient(#4f46e5 1px, transparent 1px), linear-gradient(90deg, #4f46e5 1px, transparent 1px); background-size: 40px 40px;">
+    </div>
+
+    <nav class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
+        <h1 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-indigo-500 flex items-center gap-2">
+            🧫 BIO-NEXUS <span class="text-xs text-slate-400 border border-slate-700 px-2 py-0.5 rounded-full ml-2">Virtual Gel Simulator</span>
+        </h1>
+        <a href="../index.html" class="text-slate-400 hover:text-white transition font-bold tracking-wider text-sm uppercase">← Nexus Hub</a>
+    </nav>
+
+    <div class="container mx-auto p-5 max-w-6xl flex-grow mt-4 relative z-10 flex flex-col lg:flex-row gap-8">
+        
+        <div class="w-full lg:w-1/3 space-y-6">
+            <div class="bg-slate-900 border border-slate-700 p-6 rounded-2xl shadow-2xl">
+                <h2 class="text-xl font-bold mb-2 text-emerald-400 flex items-center gap-2">🧪 Load DNA Samples</h2>
+                <p class="text-sm text-slate-400 mb-6">Enter fragment sizes in Base Pairs (bp), separated by commas.</p>
+                
+                <div class="space-y-4" id="laneInputs">
+                    <div>
+                        <label class="block text-slate-300 text-xs font-bold mb-1 uppercase tracking-wider">Lane 1 (e.g., PCR Product)</label>
+                        <input type="text" id="lane1" placeholder="e.g. 500, 1200, 3000" value="4500, 2000, 800, 250"
+                               class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500 transition font-mono text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-slate-300 text-xs font-bold mb-1 uppercase tracking-wider">Lane 2 (e.g., EcoRI Digest)</label>
+                        <input type="text" id="lane2" placeholder="e.g. 1500, 800" value="6000, 1500"
+                               class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500 transition font-mono text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-slate-300 text-xs font-bold mb-1 uppercase tracking-wider">Lane 3 (e.g., Unknown Sample)</label>
+                        <input type="text" id="lane3" placeholder="e.g. 10000, 400" value="8000, 3000, 1000, 500"
+                               class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500 transition font-mono text-sm">
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-col gap-3">
+                    <button onclick="loadGel()" class="w-full py-3 bg-slate-800 border border-slate-600 hover:bg-slate-700 rounded-xl font-bold transition text-sm tracking-wide text-white shadow-md">
+                        Load Wells 💧
+                    </button>
+                    <button onclick="runGel()" id="runBtn" disabled class="w-full py-3 bg-emerald-600/50 text-emerald-200 border border-emerald-500/50 rounded-xl font-bold transition text-sm tracking-wide shadow-md cursor-not-allowed">
+                        Turn On Power Supply ⚡
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl">
+                <h4 class="text-sm font-bold text-indigo-400 mb-2">How it works:</h4>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    DNA is negatively charged. When power is applied, fragments migrate towards the positive anode. Smaller fragments slip through the agarose matrix faster than larger ones (Logarithmic Migration).
+                </p>
+            </div>
+        </div>
+
+        <div class="w-full lg:w-2/3">
+            <div class="bg-slate-900 border border-slate-700 p-6 rounded-2xl shadow-2xl h-full flex flex-col relative">
+                
+                <div class="absolute top-4 right-6 flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-500 tracking-widest uppercase" id="uvStatus">UV Light: OFF</span>
+                    <div class="w-3 h-3 rounded-full bg-slate-700 transition-colors duration-500" id="uvIndicator"></div>
+                </div>
+
+                <h3 class="text-xl font-bold text-slate-200 mb-6">Agarose Gel (1.0%)</h3>
+                
+                <div id="tankArea" class="flex-grow gel-tank rounded-xl border-4 border-slate-700/80 p-6 overflow-x-auto relative">
+                    <div class="absolute top-2 left-1/2 -translate-x-1/2 text-slate-500 text-xl font-bold opacity-50">- Cathode</div>
+                    <div class="absolute bottom-2 left-1/2 -translate-x-1/2 text-red-500/50 text-xl font-bold">+ Anode</div>
+
+                    <div id="gelLanes" class="flex gap-4 min-w-max justify-center mt-6">
+                        <div class="h-full flex items-center justify-center w-full text-slate-600 font-mono text-sm">
+                            Click "Load Wells" to prepare the gel.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Standard DNA Ladder (1kb Plus)
+        const ladderFragments = [10000, 8000, 6000, 5000, 4000, 3000, 2000, 1500, 1000, 500, 250];
+        
+        let isLoaded = false;
+
+        function loadGel() {
+            const container = document.getElementById('gelLanes');
+            container.innerHTML = ''; // Clear tank
+            
+            // Get user inputs and parse them into arrays of numbers
+            const l1 = document.getElementById('lane1').value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+            const l2 = document.getElementById('lane2').value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+            const l3 = document.getElementById('lane3').value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+
+            // Create HTML for each lane
+            let html = '';
+            
+            // Lane 0: The Marker (Ladder) is always first
+            html += createLane('Ladder', ladderFragments, 'text-slate-300', 'bg-slate-300', true);
+            
+            // User Lanes
+            if(l1.length > 0) html += createLane('Lane 1', l1, 'text-emerald-400', 'bg-emerald-400', false);
+            if(l2.length > 0) html += createLane('Lane 2', l2, 'text-blue-400', 'bg-blue-400', false);
+            if(l3.length > 0) html += createLane('Lane 3', l3, 'text-purple-400', 'bg-purple-400', false);
+
+            container.innerHTML = html;
+
+            // Reset UI States
+            isLoaded = true;
+            document.getElementById('tankArea').classList.remove('uv-active');
+            document.getElementById('uvStatus').innerText = 'UV Light: OFF';
+            document.getElementById('uvStatus').className = 'text-xs font-bold text-slate-500 tracking-widest uppercase';
+            document.getElementById('uvIndicator').className = 'w-3 h-3 rounded-full bg-slate-700 transition-colors duration-500';
+            
+            // Enable Run Button
+            const runBtn = document.getElementById('runBtn');
+            runBtn.disabled = false;
+            runBtn.className = "w-full py-3 bg-emerald-600 hover:bg-emerald-500 border border-emerald-500 rounded-xl font-bold transition text-sm tracking-wide text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]";
+        }
+
+        function createLane(name, fragments, textColor, glowColor, isLadder) {
+            // The HTML structure for a single lane
+            let laneHtml = `<div class="flex flex-col items-center border-r border-slate-700/30 last:border-0 gel-lane">
+                <div class="text-[10px] font-bold text-slate-500 mb-4 h-6 text-center uppercase tracking-widest">${name}</div>
+                
+                <div class="w-12 h-3 border-x-2 border-b-2 border-slate-700/50 rounded-b-md mb-2 bg-slate-950/80 z-10 shadow-inner"></div>`; 
+            
+            // Bio-Physics Math: Logarithmic migration calculation
+            // Log10(10000) = 4 (Starts at top) | Log10(10) = 1 (Runs to bottom)
+            let logMax = Math.log10(12000); 
+            let logMin = Math.log10(100); 
+            
+            fragments.forEach(bp => {
+                let logBp = Math.log10(Math.max(bp, 100)); 
+                let percent = ((logMax - logBp) / (logMax - logMin)) * 100;
+                percent = Math.min(Math.max(percent, 5), 95); // Keep within tank height
+                
+                let opacity = 'opacity-0'; // Initially hidden in the well
+                
+                laneHtml += `
+                <div class="dna-band ${textColor} ${glowColor}" 
+                     style="top: 30px; box-shadow: 0 0 10px currentColor;" 
+                     data-target-top="${percent}%" 
+                     title="${bp} Base Pairs">
+                    <span class="absolute -right-12 -top-2 text-[10px] font-mono text-slate-400 opacity-0 hover:opacity-100 transition bg-slate-900 px-1 rounded border border-slate-700 z-20">${bp}bp</span>
+                </div>`;
+            });
+            
+            laneHtml += `</div>`;
+            return laneHtml;
+        }
+
+        function runGel() {
+            if(!isLoaded) return;
+            
+            // 1. Activate UV Light Visuals
+            document.getElementById('tankArea').classList.add('uv-active');
+            document.getElementById('uvStatus').innerText = 'UV Light: ON';
+            document.getElementById('uvStatus').className = 'text-xs font-bold text-indigo-400 tracking-widest uppercase';
+            document.getElementById('uvIndicator').className = 'w-3 h-3 rounded-full bg-indigo-500 shadow-[0_0_10px_#6366f1] transition-colors duration-500';
+
+            // 2. Animate the DNA Bands
+            const bands = document.querySelectorAll('.dna-band');
+            bands.forEach(band => {
+                band.classList.remove('opacity-0');
+                band.classList.add('opacity-90');
+                // The CSS transition handles the smooth sliding movement
+                setTimeout(() => { band.style.top = band.getAttribute('data-target-top'); }, 100); 
+            });
+
+            // Disable button during run
+            const runBtn = document.getElementById('runBtn');
+            runBtn.disabled = true;
+            runBtn.innerText = "Running...";
+            runBtn.className = "w-full py-3 bg-slate-800 text-slate-400 border border-slate-700 rounded-xl font-bold transition text-sm tracking-wide shadow-md cursor-not-allowed";
+        }
+    </script>
+</body>
+</html>
