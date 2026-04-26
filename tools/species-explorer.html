@@ -116,6 +116,13 @@
                 </div>
             </div>
 
+            <div id="taxaCard" class="glass-card rounded-2xl p-6 mb-8 hidden">
+                <h3 class="text-lg font-bold text-indigo-400 mb-4 border-b border-slate-700 pb-2 flex items-center gap-2">
+                    <span>🧬 Evolutionary Lineage (Taxa)</span>
+                </h3>
+                <div id="taxaTree" class="flex flex-wrap items-center gap-2 text-sm"></div>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8" id="mediaGrid">
                 <div id="galleryCard" class="glass-card rounded-2xl p-6 h-[450px] flex flex-col">
                     <h3 class="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-700 pb-2 flex justify-between items-center">
@@ -290,6 +297,44 @@
                 }
             } catch(e) {}
 
+            // Fetch taxonomic hierarchy from iNaturalist
+            try {
+                const taxaRes = await fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(sciName)}&is_active=true&per_page=1`);
+                const taxaData = await taxaRes.json();
+                
+                if (taxaData.results && taxaData.results.length > 0) {
+                    const taxon = taxaData.results[0];
+                    const ancestors = taxon.ancestors || [];
+                    const fullLineage = [...ancestors, taxon].filter(t => t.name !== 'Life');
+                    
+                    const taxaTree = document.getElementById('taxaTree');
+                    taxaTree.innerHTML = '';
+                    
+                    fullLineage.forEach((item, index) => {
+                        const taxonSpan = document.createElement('span');
+                        taxonSpan.className = "group relative cursor-help flex items-center transition-colors hover:text-emerald-400";
+                        
+                        const rankColor = getRankClass(item.rank);
+                        let commonNameStr = item.preferred_common_name ? `<br/><span class='text-xs text-slate-300 capitalize'>${item.preferred_common_name}</span>` : '';
+
+                        taxonSpan.innerHTML = `
+                            <span class="${rankColor} border-b border-dashed border-slate-600 group-hover:border-emerald-400">${item.name}</span>
+                            ${index < fullLineage.length - 1 ? '<span class="mx-2 text-slate-600 text-xs opacity-50">▶</span>' : ''}
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max max-w-[200px] bg-slate-800 text-white text-[11px] uppercase tracking-wider font-bold py-1 px-3 rounded shadow-lg border border-slate-600 z-50 text-center">
+                                ${item.rank} ${commonNameStr}
+                            </div>
+                        `;
+                        taxaTree.appendChild(taxonSpan);
+                    });
+                    
+                    document.getElementById('taxaCard').classList.remove('hidden');
+                } else {
+                    document.getElementById('taxaCard').classList.add('hidden');
+                }
+            } catch(e) {
+                document.getElementById('taxaCard').classList.add('hidden');
+            }
+
             const audioCard = document.getElementById('audioCard');
             const galleryCard = document.getElementById('galleryCard');
             if (isAnimal) {
@@ -414,6 +459,19 @@
         // ==========================================
         // 🎨 5. UI HELPER FUNCTIONS
         // ==========================================
+        function getRankClass(rank) {
+            const rankClasses = {
+                'kingdom': 'text-purple-400 font-bold',
+                'phylum': 'text-blue-400',
+                'class': 'text-cyan-400',
+                'order': 'text-green-400',
+                'family': 'text-yellow-400',
+                'genus': 'text-orange-400',
+                'species': 'text-emerald-400 italic'
+            };
+            return rankClasses[rank] || 'text-slate-300';
+        }
+
         function renderImageCard(url, source, badgeClass) {
             const imgCont = document.getElementById('imageContainer');
             const div = document.createElement('div');
@@ -499,6 +557,13 @@
         function closeSuggestions() {
             document.getElementById('suggestions').classList.add('hidden');
         }
+
+        // Add Enter key functionality to search input
+        document.getElementById('speciesInput').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                router();
+            }
+        });
     </script>
 </body>
 </html>

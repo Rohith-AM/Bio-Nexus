@@ -3,157 +3,510 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXORA | Bio-Nexus Lab</title>
-    
+    <title>Bio-Nexus | Research Platform</title>
     <link rel="stylesheet" href="style.css">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Space Grotesk', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    colors: {
-                        bio: { dark: '#0f172a', light: '#f8fafc' }
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-50 text-gray-900 dark:bg-slate-950 dark:text-slate-200 min-h-screen flex flex-col relative overflow-x-hidden transition-colors duration-300">
+<body>
 
-    <div id="dna-canvas">
-        <div class="dna-strand-container" id="helix-wrapper"></div>
+<!-- ============ BACKGROUND ============ -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- ============ TOP BAR ============ -->
+<header id="topbar">
+    <div class="topbar-left">
+        <button id="left-toggle" class="panel-toggle" onclick="toggleLeft()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="brand">
+            <span class="brand-icon">🧬</span>
+            <span class="brand-name">Bio-<span class="accent">Nexus</span></span>
+        </div>
     </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const container = document.getElementById('helix-wrapper');
-            const totalPairs = 45; 
-            const height = 1400; 
+    <div class="topbar-center">
+        <span class="version-badge">v2.0.0</span>
+    </div>
 
-            for (let i = 0; i < totalPairs; i++) {
-                const div = document.createElement('div');
-                div.className = 'base-pair';
-                
-                const yPos = (i / totalPairs) * height - (height / 2);
-                const rotation = i * 10; 
-                const delay = i * 0.5; 
+    <div class="topbar-right">
+        <button class="icon-btn" onclick="toggleGlossary()" title="Glossary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span>Glossary</span>
+        </button>
+        <button class="icon-btn" onclick="toggleTheme()" id="theme-btn" title="Toggle Theme">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <button class="icon-btn" onclick="toggleRight()" id="right-toggle" title="Quick Access">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+        </button>
+    </div>
+</header>
 
-                div.style.transform = `translate(-50%, ${yPos}px) rotateY(${rotation}deg)`;
-                
-                div.animate([
-                    { transform: `translate(-50%, ${yPos}px) rotateY(${rotation}deg)` },
-                    { transform: `translate(-50%, ${yPos}px) rotateY(${rotation + 360}deg)` }
-                ], {
-                    duration: 15000, 
-                    iterations: Infinity,
-                    delay: -delay * 500
-                });
+<!-- ============ MAIN LAYOUT ============ -->
+<div id="layout">
 
-                container.appendChild(div);
-            }
-        });
-    </script>
-
-    <nav class="border-b border-gray-200 dark:border-slate-800 p-6 sticky top-0 z-40 bg-white/70 dark:bg-slate-950/70 backdrop-blur-md">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3 group cursor-pointer">
-                <span class="text-3xl group-hover:rotate-180 transition-transform duration-700">🧬</span>
-                <h1 class="text-3xl font-bold tracking-tighter">
-                    BIO-<span class="gradient-text">NEXUS</span>
-                </h1>
-            </div>
-            
-            <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-slate-800 transition">
-                <svg id="sunIcon" class="w-6 h-6 text-yellow-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                <svg id="moonIcon" class="w-6 h-6 text-slate-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-            </button>
+    <!-- LEFT PANEL -->
+    <aside id="left-panel" class="panel open">
+        <div class="panel-header">
+            <span>Explorer</span>
         </div>
-    </nav>
+        <div class="search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="tool-search" placeholder="Search tools, APIs..." oninput="filterTools(this.value)">
+        </div>
 
-    <header class="text-center py-24 px-4 relative z-10">
-        <h2 class="text-5xl md:text-7xl font-bold mb-6 tracking-tight drop-shadow-lg">
-            Biology Meets <span class="gradient-text">Code.</span>
-        </h2>
-        <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
-            The Universal Open-Source Platform for Students & Researchers.
-            <br>
-            <span class="inline-block mt-4 px-4 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-mono border border-emerald-500/20">v1.0.0 [Stable]</span>
-        </p>
-    </header>
+        <div class="panel-section-title">🧬 DNA Tools</div>
+        <div class="tool-list" id="dna-tools">
+            <a href="tools/dna-converter.html" class="tool-item" data-tags="dna sequence gc analyzer">
+                <span class="tool-dot" style="background:#D97757"></span>
+                <span>Sequence Analyzer</span>
+            </a>
+            <a href="tools/restriction.html" class="tool-item" data-tags="dna restriction ecori bamhi cut">
+                <span class="tool-dot" style="background:#D97757"></span>
+                <span>Restriction Mapper</span>
+            </a>
+            <a href="tools/reverse.html" class="tool-item" data-tags="dna reverse complement strand">
+                <span class="tool-dot" style="background:#D97757"></span>
+                <span>Rev-Comp Generator</span>
+            </a>
+        </div>
 
-    <main class="max-w-7xl mx-auto px-6 pb-20 flex-grow z-10">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            
-            <a href="tools/dna-converter.html" class="glass-card rounded-2xl p-8 group cursor-pointer block relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150"></div>
-                <div class="p-3 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl w-fit text-3xl mb-4 tool-icon">🧪</div>
-                <h3 class="text-2xl font-bold mb-2 group-hover:text-emerald-400 transition">Sequence Analyzer</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Analyze DNA, calculate GC%, and transcribe genes.</p>
-                <div class="text-emerald-500 font-mono text-sm font-bold flex items-center gap-2 group-hover:translate-x-2 transition">Launch →</div>
+        <div class="panel-section-title">🔬 Structure Tools</div>
+        <div class="tool-list" id="structure-tools">
+            <a href="tools/mol-viewer.html" class="tool-item" data-tags="protein 3d pdb molecule viewer">
+                <span class="tool-dot" style="background:#378ADD"></span>
+                <span>3D Mol-Viewer</span>
             </a>
+        </div>
 
-            <a href="tools/mol-viewer.html" class="glass-card rounded-2xl p-8 group cursor-pointer block relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150"></div>
-                <div class="p-3 bg-blue-100 dark:bg-blue-900/40 rounded-xl w-fit text-3xl mb-4 tool-icon">🧊</div>
-                <h3 class="text-2xl font-bold mb-2 group-hover:text-blue-400 transition">3D Mol-Viewer</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Visualize PDB protein structures in 3D space.</p>
-                <div class="text-blue-500 font-mono text-sm font-bold flex items-center gap-2 group-hover:translate-x-2 transition">Launch →</div>
+        <div class="panel-section-title">🌿 Ecology Tools</div>
+        <div class="tool-list" id="ecology-tools">
+            <a href="tools/species-explorer.html" class="tool-item" data-tags="species gbif xeno bird wildlife">
+                <span class="tool-dot" style="background:#34d399"></span>
+                <span>Species Explorer</span>
             </a>
+            <a href="https://biosheet-nine.vercel.app/" target="_blank" class="tool-item" data-tags="spreadsheet data analysis shannon diversity stats">
+                <span class="tool-dot" style="background:#34d399"></span>
+                <span>BioSheet ↗</span>
+            </a>
+        </div>
 
-            <a href="tools/restriction.html" class="glass-card rounded-2xl p-8 group cursor-pointer block relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-24 h-24 bg-pink-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150"></div>
-                <div class="p-3 bg-pink-100 dark:bg-pink-900/40 rounded-xl w-fit text-3xl mb-4 tool-icon">✂️</div>
-                <h3 class="text-2xl font-bold mb-2 group-hover:text-pink-400 transition">Restriction Mapper</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Find EcoRI, BamHI cut sites instantly.</p>
-                <div class="text-pink-500 font-mono text-sm font-bold flex items-center gap-2 group-hover:translate-x-2 transition">Launch →</div>
+        <div class="panel-section-title">🧠 Intelligence</div>
+        <div class="tool-list">
+            <a href="Bio-Nexus Intelligence/index.html" class="tool-item" data-tags="species identify search wikipedia gbif pubmed inaturalist">
+                <span class="tool-dot" style="background:#a78bfa"></span>
+                <span>Bio-Intelligence</span>
             </a>
-            
-            <a href="tools/reverse.html" class="glass-card rounded-2xl p-8 group cursor-pointer block relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150"></div>
-                <div class="p-3 bg-purple-100 dark:bg-purple-900/40 rounded-xl w-fit text-3xl mb-4 tool-icon">🔄</div>
-                <h3 class="text-2xl font-bold mb-2 group-hover:text-purple-400 transition">Rev-Comp Gen</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Generate Reverse & Complement strands.</p>
-                <div class="text-purple-500 font-mono text-sm font-bold flex items-center gap-2 group-hover:translate-x-2 transition">Launch →</div>
-            </a>
+        </div>
 
-            <a href="tools/species-explorer.html" class="glass-card rounded-2xl p-8 group cursor-pointer block relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-24 h-24 bg-yellow-500/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150"></div>
-                <div class="p-3 bg-yellow-100 dark:bg-yellow-900/40 rounded-xl w-fit text-3xl mb-4 tool-icon">🦜</div>
-                <h3 class="text-2xl font-bold mb-2 group-hover:text-yellow-400 transition">Species Explorer</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Explore wildlife images & sounds (GBIF & Xeno-canto).</p>
-                <div class="text-yellow-500 font-mono text-sm font-bold flex items-center gap-2 group-hover:translate-x-2 transition">Launch →</div>
+        <div class="panel-section-title">🔗 APIs Used</div>
+        <div class="tool-list">
+            <a href="https://www.gbif.org" target="_blank" class="tool-item" data-tags="gbif biodiversity api">
+                <span class="tool-dot" style="background:#6b7280"></span>
+                <span>GBIF ↗</span>
             </a>
+            <a href="https://pubmed.ncbi.nlm.nih.gov" target="_blank" class="tool-item" data-tags="pubmed research papers api">
+                <span class="tool-dot" style="background:#6b7280"></span>
+                <span>PubMed ↗</span>
+            </a>
+            <a href="https://www.inaturalist.org" target="_blank" class="tool-item" data-tags="inaturalist species observation api">
+                <span class="tool-dot" style="background:#6b7280"></span>
+                <span>iNaturalist ↗</span>
+            </a>
+            <a href="https://xeno-canto.org" target="_blank" class="tool-item" data-tags="xeno canto bird sound api">
+                <span class="tool-dot" style="background:#6b7280"></span>
+                <span>Xeno-Canto ↗</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main id="main-content">
+        <div class="hero">
+            <h2>Biology Meets <span class="accent">Intelligence.</span></h2>
+            <p>Open-source research platform for students & field biologists.</p>
+        </div>
+
+        <div class="cards-grid">
+
+            <!-- BIOLAB CARD -->
+            <div class="big-card" id="biolab-card">
+                <div class="card-header">
+                    <span class="card-icon">🧬</span>
+                    <div>
+                        <h3>BioLab</h3>
+                        <p>Research tools & analysis suite</p>
+                    </div>
+                    <button class="card-expand-btn" onclick="toggleCard('biolab-body')">▾</button>
+                </div>
+                <div class="card-body" id="biolab-body">
+
+                    <div class="tool-stack">
+                        <div class="stack-title">DNA Tools</div>
+                        <a href="tools/dna-converter.html" class="stack-item">
+                            <span>🧪</span>
+                            <div>
+                                <div class="stack-item-name">Sequence Analyzer</div>
+                                <div class="stack-item-desc">Analyze DNA, GC%, transcription</div>
+                            </div>
+                            <span class="launch">→</span>
+                        </a>
+                        <a href="tools/restriction.html" class="stack-item">
+                            <span>✂️</span>
+                            <div>
+                                <div class="stack-item-name">Restriction Mapper</div>
+                                <div class="stack-item-desc">Find EcoRI, BamHI cut sites</div>
+                            </div>
+                            <span class="launch">→</span>
+                        </a>
+                        <a href="tools/reverse.html" class="stack-item">
+                            <span>🔄</span>
+                            <div>
+                                <div class="stack-item-name">Rev-Comp Generator</div>
+                                <div class="stack-item-desc">Reverse & complement strands</div>
+                            </div>
+                            <span class="launch">→</span>
+                        </a>
+                    </div>
+
+                    <div class="tool-stack">
+                        <div class="stack-title">Structure & Ecology</div>
+                        <a href="tools/mol-viewer.html" class="stack-item">
+                            <span>🧊</span>
+                            <div>
+                                <div class="stack-item-name">3D Mol-Viewer</div>
+                                <div class="stack-item-desc">Visualize PDB protein structures</div>
+                            </div>
+                            <span class="launch">→</span>
+                        </a>
+                        <a href="tools/species-explorer.html" class="stack-item">
+                            <span>🦜</span>
+                            <div>
+                                <div class="stack-item-name">Species Explorer</div>
+                                <div class="stack-item-desc">GBIF & Xeno-canto wildlife data</div>
+                            </div>
+                            <span class="launch">→</span>
+                        </a>
+                        <a href="https://biosheet-nine.vercel.app/" target="_blank" class="stack-item">
+                            <span>📊</span>
+                            <div>
+                                <div class="stack-item-name">BioSheet ↗</div>
+                                <div class="stack-item-desc">R-powered biology spreadsheet</div>
+                            </div>
+                            <span class="launch">→</span>
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- BIO-INTELLIGENCE CARD -->
+            <div class="big-card" id="intel-card">
+                <div class="card-header">
+                    <span class="card-icon">🧠</span>
+                    <div>
+                        <h3>Bio-Intelligence</h3>
+                        <p>AI-powered species & research search</p>
+                    </div>
+                    <button class="card-expand-btn" onclick="toggleCard('intel-body')">▾</button>
+                </div>
+                <div class="card-body" id="intel-body">
+                    <div class="intel-search-wrap">
+                        <input type="text" placeholder="Search species, disease, microorganism..." id="intel-input" onkeydown="if(event.key==='Enter') launchIntel()">
+                        <button onclick="launchIntel()">Search →</button>
+                    </div>
+                    <div class="api-badges">
+                        <span class="badge">Wikipedia</span>
+                        <span class="badge">GBIF</span>
+                        <span class="badge">PubMed</span>
+                        <span class="badge">iNaturalist</span>
+                        <span class="badge">Xeno-Canto</span>
+                        <span class="badge">OpenStax</span>
+                    </div>
+                    <a href="Bio-Nexus Intelligence/index.html" class="full-launch-btn">Open Full Interface →</a>
+                </div>
+            </div>
+
+            <!-- BIOFIELD CARD -->
+            <div class="big-card" id="biofield-card">
+                <div class="card-header">
+                    <span class="card-icon">🌿</span>
+                    <div>
+                        <h3>BioField</h3>
+                        <p>Field observation logger</p>
+                    </div>
+                    <button class="card-expand-btn" onclick="toggleCard('biofield-body')">▾</button>
+                </div>
+                <div class="card-body" id="biofield-body">
+                    <div class="coming-soon">
+                        <span>🚧</span>
+                        <p>Coming Soon</p>
+                        <small>Field observation logging with GPS, photo upload & iNaturalist sync</small>
+                    </div>
+                </div>
+            </div>
 
         </div>
     </main>
 
-    <script>
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
+    <!-- RIGHT PANEL -->
+    <aside id="right-panel" class="panel">
+        <div class="panel-header">
+            <span>Quick Access</span>
+        </div>
+
+        <!-- QUICK NOTES -->
+        <div class="panel-section-title">📝 Quick Notes</div>
+        <textarea id="quick-notes" placeholder="Jot down observations..." oninput="saveNotes()"></textarea>
+        <button class="small-btn" onclick="clearNotes()">Clear</button>
+
+        <!-- UNIT CONVERTER -->
+        <div class="panel-section-title">⚗️ Unit Converter</div>
+        <div class="converter-wrap">
+            <input type="number" id="conv-val" placeholder="Value" oninput="convert()">
+            <select id="conv-from" onchange="convert()">
+                <option value="m">Meters</option>
+                <option value="cm">Centimeters</option>
+                <option value="mm">Millimeters</option>
+                <option value="um">Micrometers</option>
+                <option value="nm">Nanometers</option>
+            </select>
+            <span>→</span>
+            <select id="conv-to" onchange="convert()">
+                <option value="cm">Centimeters</option>
+                <option value="mm">Millimeters</option>
+                <option value="um">Micrometers</option>
+                <option value="nm">Nanometers</option>
+                <option value="m">Meters</option>
+            </select>
+            <div id="conv-result" class="conv-result">—</div>
+        </div>
+
+        <!-- LAB TIMER -->
+        <div class="panel-section-title">⏱️ Lab Timer</div>
+        <div class="timer-wrap">
+            <div id="timer-display">00:00</div>
+            <div class="timer-btns">
+                <button class="small-btn" onclick="startTimer()">Start</button>
+                <button class="small-btn" onclick="pauseTimer()">Pause</button>
+                <button class="small-btn" onclick="resetTimer()">Reset</button>
+            </div>
+        </div>
+
+    </aside>
+
+</div>
+
+<!-- GLOSSARY MODAL -->
+<div id="glossary-modal" class="modal hidden">
+    <div class="modal-box">
+        <div class="modal-header">
+            <span>📖 Biology Glossary</span>
+            <button onclick="toggleGlossary()">✕</button>
+        </div>
+        <input type="text" id="glossary-search" placeholder="Search terms..." oninput="filterGlossary(this.value)">
+        <div id="glossary-list"></div>
+    </div>
+</div>
+
+<script>
+// ===== PANEL TOGGLES =====
+function toggleLeft() {
+    document.getElementById('left-panel').classList.toggle('open');
+}
+function toggleRight() {
+    document.getElementById('right-panel').classList.toggle('open');
+}
+
+// ===== CARD EXPAND =====
+function toggleCard(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('collapsed');
+}
+
+// ===== TOOL SEARCH =====
+function filterTools(val) {
+    const items = document.querySelectorAll('.tool-item');
+    val = val.toLowerCase();
+    items.forEach(item => {
+        const tags = item.dataset.tags || '';
+        const name = item.textContent.toLowerCase();
+        item.style.display = (tags.includes(val) || name.includes(val)) ? 'flex' : 'none';
+    });
+    document.querySelectorAll('.panel-section-title').forEach(title => {
+        const next = title.nextElementSibling;
+        if (next) {
+            const visible = [...next.querySelectorAll('.tool-item')].some(i => i.style.display !== 'none');
+            title.style.display = visible ? 'block' : 'none';
         }
-        function updateIcons() {
-            const isDark = document.documentElement.classList.contains('dark');
-            document.getElementById('sunIcon').classList.toggle('hidden', !isDark);
-            document.getElementById('moonIcon').classList.toggle('hidden', isDark);
-        }
-        updateIcons();
-        function toggleTheme() {
-            document.documentElement.classList.toggle('dark');
-            localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-            updateIcons();
-        }
-    </script>
-    
-    <script src="js/nexus-widget.js"></script>
+    });
+}
+
+// ===== INTEL SEARCH =====
+function launchIntel() {
+    const q = document.getElementById('intel-input').value.trim();
+    if (q) window.open(`Bio-Nexus Intelligence/index.html?q=${encodeURIComponent(q)}`, '_blank');
+}
+
+// ===== THEME =====
+function toggleTheme() {
+    document.documentElement.classList.toggle('dark');
+    localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+}
+if (localStorage.theme !== 'light') document.documentElement.classList.add('dark');
+
+// ===== NOTES =====
+function saveNotes() {
+    localStorage.setItem('bio-notes', document.getElementById('quick-notes').value);
+}
+function clearNotes() {
+    document.getElementById('quick-notes').value = '';
+    localStorage.removeItem('bio-notes');
+}
+window.addEventListener('load', () => {
+    const n = localStorage.getItem('bio-notes');
+    if (n) document.getElementById('quick-notes').value = n;
+});
+
+// ===== UNIT CONVERTER =====
+const toMeters = { m:1, cm:0.01, mm:0.001, um:0.000001, nm:0.000000001 };
+function convert() {
+    const val = parseFloat(document.getElementById('conv-val').value);
+    const from = document.getElementById('conv-from').value;
+    const to = document.getElementById('conv-to').value;
+    if (isNaN(val)) { document.getElementById('conv-result').textContent = '—'; return; }
+    const result = val * toMeters[from] / toMeters[to];
+    document.getElementById('conv-result').textContent = result.toExponential(3);
+}
+
+// ===== LAB TIMER =====
+let timerInterval, timerSeconds = 0, timerRunning = false;
+function startTimer() {
+    if (timerRunning) return;
+    timerRunning = true;
+    timerInterval = setInterval(() => {
+        timerSeconds++;
+        const m = String(Math.floor(timerSeconds/60)).padStart(2,'0');
+        const s = String(timerSeconds%60).padStart(2,'0');
+        document.getElementById('timer-display').textContent = `${m}:${s}`;
+    }, 1000);
+}
+function pauseTimer() {
+    clearInterval(timerInterval);
+    timerRunning = false;
+}
+function resetTimer() {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    timerSeconds = 0;
+    document.getElementById('timer-display').textContent = '00:00';
+}
+
+// ===== GLOSSARY =====
+const glossaryTerms = [
+    { term: 'Allele', def: 'Alternative form of a gene at a given locus.' },
+    { term: 'Biodiversity', def: 'Variety of life in a particular habitat or ecosystem.' },
+    { term: 'Chromosome', def: 'Thread-like structure of DNA carrying genetic information.' },
+    { term: 'DNA', def: 'Deoxyribonucleic acid — molecule carrying genetic instructions.' },
+    { term: 'Ecosystem', def: 'Community of organisms interacting with their environment.' },
+    { term: 'Enzyme', def: 'Protein that acts as a biological catalyst.' },
+    { term: 'Gene', def: 'Unit of heredity — a sequence of DNA encoding a protein.' },
+    { term: 'Hardy-Weinberg', def: 'Principle describing allele frequency equilibrium in populations.' },
+    { term: 'Homeostasis', def: 'Maintenance of stable internal conditions in an organism.' },
+    { term: 'Meiosis', def: 'Cell division producing four haploid daughter cells.' },
+    { term: 'Mitosis', def: 'Cell division producing two identical diploid daughter cells.' },
+    { term: 'Mutation', def: 'Change in DNA sequence that may alter gene function.' },
+    { term: 'Natural Selection', def: 'Process by which favorable traits become more common.' },
+    { term: 'Nucleotide', def: 'Building block of DNA/RNA — base, sugar, phosphate.' },
+    { term: 'Osmosis', def: 'Movement of water across a semi-permeable membrane.' },
+    { term: 'Phenotype', def: 'Observable characteristics of an organism.' },
+    { term: 'Photosynthesis', def: 'Process by which plants convert light energy to glucose.' },
+    { term: 'Protein', def: 'Large biomolecule made of amino acid chains.' },
+    { term: 'RNA', def: 'Ribonucleic acid — involved in protein synthesis.' },
+    { term: 'Shannon Index', def: 'Measure of species diversity in a community (H\').' },
+    { term: 'Species Richness', def: 'Number of different species in a given area.' },
+    { term: 'Transcription', def: 'Process of copying DNA into mRNA.' },
+    { term: 'Translation', def: 'Process of synthesizing protein from mRNA.' },
+    { term: 'Trophic Level', def: 'Position of organism in food chain.' },
+];
+
+function renderGlossary(terms) {
+    document.getElementById('glossary-list').innerHTML = terms.map(t =>
+        `<div class="glossary-item"><span class="g-term">${t.term}</span><span class="g-def">${t.def}</span></div>`
+    ).join('');
+}
+function filterGlossary(val) {
+    renderGlossary(glossaryTerms.filter(t =>
+        t.term.toLowerCase().includes(val.toLowerCase()) ||
+        t.def.toLowerCase().includes(val.toLowerCase())
+    ));
+}
+function toggleGlossary() {
+    document.getElementById('glossary-modal').classList.toggle('hidden');
+    if (!document.getElementById('glossary-modal').classList.contains('hidden')) {
+        renderGlossary(glossaryTerms);
+    }
+}
+
+// ===== BACKGROUND CANVAS =====
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+function initParticles() {
+    particles = [];
+    for (let i = 0; i < 40; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: Math.random() * 2 + 1,
+            dx: (Math.random() - 0.5) * 0.3,
+            dy: (Math.random() - 0.5) * 0.3,
+            opacity: Math.random() * 0.4 + 0.1
+        });
+    }
+}
+
+function drawParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(217, 119, 87, ${p.opacity})`;
+        ctx.fill();
+        p.x += p.dx;
+        p.y += p.dy;
+        if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+    });
+    // Draw connections
+    particles.forEach((a, i) => {
+        particles.slice(i+1).forEach(b => {
+            const dist = Math.hypot(a.x-b.x, a.y-b.y);
+            if (dist < 120) {
+                ctx.beginPath();
+                ctx.moveTo(a.x, a.y);
+                ctx.lineTo(b.x, b.y);
+                ctx.strokeStyle = `rgba(217,119,87,${0.08*(1-dist/120)})`;
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
+        });
+    });
+    requestAnimationFrame(drawParticles);
+}
+
+resizeCanvas();
+initParticles();
+drawParticles();
+window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
+</script>
+
 </body>
 </html>

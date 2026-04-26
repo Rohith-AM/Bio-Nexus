@@ -1,0 +1,59 @@
+/* css/style.css */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
+
+body {
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Ziyal Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #0f172a; 
+}
+::-webkit-scrollbar-thumb {
+    background: #4f46e5; 
+    border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #6366f1; 
+}
+
+/* Command Palette Animation */
+.animate-fade-up {
+    animation: fadeUp 0.3s ease-out forwards;
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Add this to css/style.css */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-12px); }
+    100% { transform: translateY(0px); }
+}
+
+.animate-float { 
+    animation: float 5s ease-in-out infinite; 
+}
+
+.animate-float-delayed { 
+    animation: float 5s ease-in-out 2.5s infinite; 
+}
+
+/* Add this to css/style.css */
+@keyframes organicFloat {
+    0% { transform: translate(0px, 0px) rotate(0deg); }
+    25% { transform: translate(10px, -15px) rotate(2deg); }
+    50% { transform: translate(20px, 0px) rotate(0deg); }
+    75% { transform: translate(10px, 15px) rotate(-2deg); }
+    100% { transform: translate(0px, 0px) rotate(0deg); }
+}
+
+.float-node {
+    animation: organicFloat 8s ease-in-out infinite;
+}

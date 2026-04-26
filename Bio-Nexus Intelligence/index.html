@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ziyal | Bio-Nexus Intelligence</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-slate-950 text-white min-h-screen overflow-hidden font-sans relative">
+    
+    <div class="absolute inset-0 z-0 opacity-10 pointer-events-none" style="background-image: linear-gradient(#4f46e5 1px, transparent 1px), linear-gradient(90deg, #4f46e5 1px, transparent 1px); background-size: 40px 40px;"></div>
+
+    <div id="mainWrapper" class="w-full h-screen transition-all duration-500 ease-in-out relative z-10">
+        
+        <nav class="absolute top-0 w-full p-5 z-20 flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-tight">BIO-NEXUS <span class="text-indigo-400">CORE</span></h1>
+            <button id="cmdBtn" class="bg-slate-800/80 hover:bg-slate-700 border border-slate-600 px-4 py-2 rounded-xl text-sm text-slate-300 backdrop-blur-md transition-all flex items-center gap-2">
+                <span>Search Command</span> <kbd class="bg-slate-900 px-2 py-0.5 rounded text-xs text-indigo-400 font-mono">Alt + K</kbd>
+            </button>
+        </nav>
+
+        <main class="w-full h-full flex flex-col items-center justify-center relative">
+            
+            <div id="welcomeScreen" class="text-center mb-8 transition-all duration-700">
+                <h2 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-emerald-400 mb-3 tracking-tight">Bio-Nexus Intelligence</h2>
+                <p class="text-slate-400 text-sm md:text-base">Initialize a query to map the biosphere network.</p>
+            </div>
+
+            <div class="relative w-[700px] flex flex-col items-center justify-center h-[400px]">
+                
+                <div id="coreNodeContainer" class="hidden flex-col items-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 transition-all duration-700 animate-fade-up">
+                    <div class="bg-slate-900 border-2 border-indigo-500 rounded-full w-48 h-48 flex flex-col items-center justify-center shadow-[0_0_50px_rgba(79,70,229,0.3)] mb-4 overflow-hidden relative group animate-float">
+                        <div class="absolute inset-0 bg-indigo-500/10 rounded-full animate-pulse"></div>
+                        <img id="nodeImage" src="" class="w-full h-full object-cover hidden relative z-10">
+                        <span class="text-5xl relative z-10 hidden" id="nodeIcon">🦠</span>
+                    </div>
+                    <h2 class="text-center font-bold text-lg bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-700 backdrop-blur-sm" id="nodeTitle"></h2>
+                </div>
+
+                <svg id="networkLines" class="absolute inset-0 w-full h-full pointer-events-none z-10 hidden transition-opacity duration-700">
+                    <line id="lineInfo" stroke="#4f46e5" stroke-width="2" stroke-opacity="0.5" stroke-dasharray="4 4" />
+                    <line id="lineMap" stroke="#34d399" stroke-width="2" stroke-opacity="0.5" stroke-dasharray="4 4" />
+                    <line id="lineAudio" stroke="#fb923c" stroke-width="2" stroke-opacity="0.5" stroke-dasharray="4 4" />
+                    <line id="lineLit" stroke="#c084fc" stroke-width="2" stroke-opacity="0.5" stroke-dasharray="4 4" />
+                </svg>
+
+                <div id="orbitalNodes" class="hidden absolute inset-[-50px] pointer-events-none z-30">
+                    
+                    <button id="btnInfo" class="absolute top-0 left-0 pointer-events-auto bg-slate-800/90 border border-slate-600 hover:border-blue-400 p-5 rounded-2xl backdrop-blur-md transition-all hover:scale-105 group cursor-pointer shadow-lg float-node">
+                        <span class="text-3xl block mb-2">🧬</span><span class="text-xs font-bold text-slate-300 group-hover:text-blue-300">Taxa & Info</span>
+                    </button>
+
+                    <button id="btnMap" class="absolute top-0 right-0 pointer-events-auto bg-slate-800/90 border border-slate-600 hover:border-emerald-400 p-5 rounded-2xl backdrop-blur-md transition-all hover:scale-105 group cursor-pointer shadow-lg float-node" style="animation-delay: 0.5s;">
+                        <span class="text-3xl block mb-2">🌍</span><span class="text-xs font-bold text-slate-300 group-hover:text-emerald-300">Distribution</span>
+                    </button>
+                    
+                    <button id="btnAudio" class="absolute bottom-0 left-0 pointer-events-auto bg-slate-800/90 border border-slate-600 hover:border-orange-400 p-5 rounded-2xl backdrop-blur-md transition-all hover:scale-105 group cursor-pointer shadow-lg float-node" style="animation-delay: 1s;">
+                        <span class="text-3xl block mb-2">🔊</span><span class="text-xs font-bold text-slate-300 group-hover:text-orange-300">Bio-Acoustics</span>
+                    </button>
+
+                    <button id="btnLit" class="absolute bottom-0 right-0 pointer-events-auto bg-slate-800/90 border border-slate-600 hover:border-purple-400 p-5 rounded-2xl backdrop-blur-md transition-all hover:scale-105 group cursor-pointer shadow-lg float-node" style="animation-delay: 1.5s;">
+                        <span class="text-3xl block mb-2">📚</span><span class="text-xs font-bold text-slate-300 group-hover:text-purple-300">Literature</span>
+                    </button>
+                </div>
+                
+                <div id="searchContainer" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 transition-all duration-700 w-full flex justify-center">
+                    <input type="text" id="globalSearch" placeholder="e.g., Panthera tigris or Copsychus saularis..." autocomplete="off" class="bg-slate-900 border-2 border-slate-600 rounded-full px-8 py-5 text-base text-center text-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/30 backdrop-blur-md w-3/4 max-w-lg shadow-2xl transition-all">
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="sideDrawer" class="fixed top-0 right-0 w-full md:w-[500px] h-full bg-slate-900/95 backdrop-blur-3xl border-l border-slate-700 shadow-2xl z-50 transform translate-x-full transition-transform duration-500 ease-in-out p-6 overflow-y-auto">
+        <button id="btnCloseDrawer" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 hover:bg-red-500/20 p-2 rounded-lg transition-colors z-50 text-sm cursor-pointer">✕ Close</button>
+        <h2 id="drawerTitle" class="text-2xl font-bold text-indigo-400 mb-6 mt-4 capitalize">Data Panel</h2>
+        <div id="drawerContent" class="space-y-4">
+            </div>
+    </div>
+
+    <div id="cmdOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden items-start justify-center pt-32">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-fade-up">
+            <div class="p-4 border-b border-slate-800 flex items-center gap-3">
+                <span class="text-indigo-500 text-xl">></span>
+                <input type="text" id="cmdInput" class="w-full bg-transparent outline-none text-xl text-white placeholder-slate-500" placeholder="Type 'map', 'audio', or a species name..." autocomplete="off">
+            </div>
+            <div class="p-2 text-xs text-slate-500 bg-slate-950/50 flex justify-between">
+                <span>Use arrows to navigate, Enter to select</span>
+                <span>ESC to close</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
