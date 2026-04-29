@@ -8,94 +8,269 @@
     <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        /* Custom scrollbar for the predictive search dropdown */
-        #searchDropdown::-webkit-scrollbar { width: 6px; }
-        #searchDropdown::-webkit-scrollbar-thumb { background: #4B5563; border-radius: 4px; }
+        body {
+            background: linear-gradient(135deg, #050816 0%, #0c1325 45%, #090f1b 100%);
+            min-height: 100vh;
+        }
+        @keyframes glow {
+            0% { box-shadow: 0 0 8px rgba(56, 189, 248, 0.35); }
+            50% { box-shadow: 0 0 22px rgba(56, 189, 248, 0.55); }
+            100% { box-shadow: 0 0 8px rgba(56, 189, 248, 0.35); }
+        }
+        .glow-border { animation: glow 3s infinite; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .float { animation: float 6s ease-in-out infinite; }
+        .glass {
+            background: rgba(15, 23, 42, 0.72);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+        }
+        .neon-text {
+            text-shadow: 0 0 8px rgba(56, 189, 248, 0.65), 0 0 16px rgba(56, 189, 248, 0.45), 0 0 24px rgba(59, 130, 246, 0.25);
+        }
     </style>
 </head>
-<body class="bg-gray-900 text-white font-sans">
+<body class="text-white font-sans">
 
-    <nav class="p-5 border-b border-gray-800 flex justify-between items-center bg-gray-900/50 backdrop-blur-md sticky top-0 z-50">
-        <h1 class="text-2xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
-            BIO-NEXUS <span class="text-xs text-gray-400 font-normal">by NEXORA™</span>
+    <nav class="glass p-4 sticky top-0 z-50 flex justify-between items-center">
+        <h1 class="text-2xl font-bold neon-text bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-400 to-purple-500 float">
+            🧬 BIO-NEXUS <span class="text-xs text-gray-300 font-normal">by NEXORA™</span>
         </h1>
-        <a href="../index.html" class="text-gray-400 hover:text-white transition">← Back to Hub</a>
+        <a href="../index.html" class="flex items-center px-4 py-2 bg-slate-800/90 rounded-lg hover:bg-slate-700/90 transition shadow-lg shadow-slate-800/50">
+            <span class="mr-2">⬅️</span> Back to Hub
+        </a>
     </nav>
 
-    <div class="container mx-auto p-5 mt-5">
-        <h2 class="text-3xl font-bold text-center mb-6 text-blue-400">Interactive Protein Visualizer</h2>
+    <div class="container mx-auto p-6">
+        <div class="text-center mb-8">
+            <h2 class="text-4xl font-bold neon-text mb-2 flex items-center justify-center gap-3"><span class="inline-flex w-11 h-11 items-center justify-center rounded-full bg-slate-800/80 text-sky-300">
+                    <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l16-8L4 4v16z"/></svg>
+                </span>Interactive Protein Visualizer</h2>
+            <p class="text-gray-300 text-lg">Explore molecular structures in stunning 3D</p>
+        </div>
         
-        <div class="relative flex justify-center gap-4 mb-6 max-w-2xl mx-auto">
-            <div class="relative w-full">
-                <input type="text" id="pdbInput" oninput="filterSearch()" placeholder="Type a Protein Name (e.g., Insulin) or PDB ID..." autocomplete="off" class="w-full p-3 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500 text-white shadow-inner">
-                
-                <ul id="searchDropdown" class="absolute w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-2xl max-h-60 overflow-y-auto hidden z-50">
+        <div class="glass rounded-xl p-6 mb-6 shadow-2xl">
+            <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+                <div class="relative flex-1 max-w-2xl">
+                    <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400">
+                        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+                    </span>
+                    <input type="text" id="pdbInput" oninput="filterSearch()" onkeydown="handleSearchKey(event)" placeholder="Search for proteins (e.g., Insulin) or enter PDB ID..." autocomplete="off" class="w-full pl-12 pr-4 py-4 rounded-lg bg-slate-900/90 border border-slate-700 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-500/25 text-white shadow-inner text-lg">
+                    
+                    <ul id="searchDropdown" class="absolute w-full mt-2 bg-gray-800/90 border border-gray-600 rounded-lg shadow-2xl max-h-60 overflow-y-auto hidden z-50 backdrop-blur-md">
                     </ul>
+                </div>
+                <button onclick="resolveAndLoadPDB()" class="px-8 py-4 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-400 hover:to-indigo-400 rounded-lg font-bold transition shadow-lg shadow-sky-500/20 transform hover:scale-105 text-lg flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" class="w-6 h-6 mr-3 text-white" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H7l-4-4V5a2 2 0 0 1 2-2h11"/><path d="M17 8l-6 6"/><path d="M11 8h6v6"/></svg>
+                    Visualize
+                </button>
             </div>
-            <button onclick="resolveAndLoadPDB()" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded font-bold transition shadow-lg shadow-blue-500/30 whitespace-nowrap">Visualize 🧬</button>
         </div>
 
-        <div id="container-01" class="relative w-full h-[500px] border border-gray-700 rounded-xl overflow-hidden bg-black shadow-2xl">
-            <p id="statusText" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-500">Structure will load here...</p>
+        <div class="flex flex-col lg:flex-row gap-6">
+            <div class="flex-1">
+                <div id="container-01" class="relative w-full h-96 border-2 border-blue-500/50 rounded-xl overflow-hidden bg-black shadow-2xl glow-border">
+                    <p id="statusText" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 text-xl">🧪 Ready to load molecular structure...</p>
+                </div>
+                
+                <div id="proteinInfo" class="mt-6 glass rounded-xl p-6 shadow-2xl hidden">
+                    <h3 class="text-2xl font-semibold neon-text mb-4 flex items-center gap-3">
+                        <span class="inline-flex w-10 h-10 items-center justify-center rounded-full bg-slate-800/80 text-sky-300">
+                            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M6 15V8"/><path d="M10 15V5"/><path d="M14 15v-3"/><path d="M18 15v-6"/></svg>
+                        </span>Molecular Details
+                    </h3>
+                    <div id="infoText" class="text-gray-200 text-base leading-relaxed grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Info will be populated here -->
+                    </div>
+                </div>
+            </div>
+            
+<div id="controlPanel" class="w-full lg:w-80 hidden">
+                <div class="glass rounded-xl shadow-2xl border border-gray-600/50 p-6">
+                    <h3 class="text-xl font-bold text-center neon-text mb-6 flex items-center justify-center">
+                        <span class="mr-2 inline-flex w-8 h-8 items-center justify-center rounded-full bg-slate-700/75 text-sky-300">
+                            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6"/><path d="M18 3v6"/><path d="M6 15v6"/><path d="M18 15v6"/><path d="M3 6h6"/><path d="M3 18h6"/><path d="M15 6h6"/><path d="M15 18h6"/></svg>
+                        </span> Control Panel
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="group p-4 bg-slate-800/90 rounded-lg hover:bg-slate-700/90 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-slate-500/40 transform hover:scale-105 border border-slate-700/50" onclick="setCartoon()">
+                            <div class="flex items-center">
+                                <span class="mr-4 inline-flex w-10 h-10 items-center justify-center rounded-full bg-slate-900/80 text-cyan-300">
+                        <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12c1.5-2 3.5-3 6-3s4.5 1 6 3"/><path d="M5 12c1.5 2 3.5 3 6 3s4.5-1 6-3"/><path d="M7 6v12"/></svg>
+                    </span>
+                                <div>
+                                    <h4 class="font-bold text-white">Cartoon</h4>
+                                    <p class="text-xs text-blue-200">Ribbon visualization</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="group p-4 bg-slate-800/90 rounded-lg hover:bg-slate-700/90 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-slate-500/40 transform hover:scale-105 border border-slate-700/50" onclick="setStick()">
+                            <div class="flex items-center">
+                                <span class="mr-4 inline-flex w-10 h-10 items-center justify-center rounded-full bg-slate-900/80 text-emerald-300">
+                                <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 5l10 14"/><path d="M17 5L7 19"/></svg>
+                            </span>
+                                <div>
+                                    <h4 class="font-bold text-white">Stick</h4>
+                                    <p class="text-xs text-green-200">Bond structures</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="group p-4 bg-slate-800/90 rounded-lg hover:bg-slate-700/90 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-slate-500/40 transform hover:scale-105 border border-slate-700/50" onclick="setSphere()">
+                            <div class="flex items-center">
+                                <span class="mr-4 inline-flex w-10 h-10 items-center justify-center rounded-full bg-slate-900/80 text-violet-300">
+                                <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M2 12h2"/><path d="M20 12h2"/></svg>
+                            </span>
+                                <div>
+                                    <h4 class="font-bold text-white">Sphere</h4>
+                                    <p class="text-xs text-purple-200">Atomic spheres</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="group p-4 bg-slate-800/90 rounded-lg hover:bg-slate-700/90 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-slate-500/40 transform hover:scale-105 border border-slate-700/50" onclick="resetView()">
+                            <div class="flex items-center">
+                                <span class="mr-4 inline-flex w-10 h-10 items-center justify-center rounded-full bg-slate-900/80 text-rose-300 transition-transform duration-500 group-hover:rotate-180">
+                                <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v6h6"/><path d="M20 20a9 9 0 1 0-9 0"/></svg>
+                            </span>
+                                <div>
+                                    <h4 class="font-bold text-white">Reset View</h4>
+                                    <p class="text-xs text-red-200">Center & zoom</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="group p-4 bg-slate-800/90 rounded-lg hover:bg-slate-700/90 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-slate-500/40 transform hover:scale-102 border border-slate-700/50" onclick="clearViewer()">
+                            <div class="flex items-center">
+                                <span class="mr-4 inline-flex w-10 h-10 items-center justify-center rounded-full bg-slate-900/80 text-slate-200">
+                                <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M9 6v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V6"/></svg>
+                            </span>
+                                <div>
+                                    <h4 class="font-bold text-white">Clear</h4>
+                                    <p class="text-xs text-gray-200">Reset everything</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <p class="text-center text-gray-400 mt-4 text-sm">💡 <b>Pro Tip:</b> Hover your mouse over the 3D model to see Alpha Helices, Beta Sheets, and DNA Bases!</p>
-    </div>
+
+        <div class="mt-8 text-center glass rounded-xl p-6 shadow-2xl">
+            <p class="text-gray-300 text-lg flex items-center justify-center">
+                <span class="mr-2">💡</span> 
+                <strong class="neon-text">Pro Tip:</strong> Hover over the 3D model to reveal structural details like helices and sheets!
+            </p>
+        </div>
 
     <script>
-        // ==========================================
-        // 1. THE PROTEIN DICTIONARY (Data Layer)
-        // ==========================================
-        const commonProteins = [
-            { name: "Hemoglobin (Blood Oxygen Transport)", code: "4HHB" },
-            { name: "Insulin (Blood Sugar Regulation)", code: "1PEI" },
-            { name: "Collagen (Skin & Bone Structure)", code: "1BKV" },
-            { name: "DNA Double Helix", code: "1BNA" },
-            { name: "GFP (Green Fluorescent Protein)", code: "1EMA" },
-            { name: "CRISPR Cas9 (Gene Editing)", code: "5F9R" },
-            { name: "Myoglobin (Muscle Oxygen)", code: "1MBN" },
-            { name: "Keratin (Hair & Nails)", code: "3TNU" },
-            { name: "Antibody IgG", code: "1IGT" },
-            { name: "Ubiquitin", code: "1UBQ" },
-            { name: "ATP Synthase (Energy Motor)", code: "1E79" }
-        ];
+        let searchTimeout;
+        let viewer;
+        let proteinList = [];
+        const localProteinFile = 'protein-index.json';
+
+        window.addEventListener('DOMContentLoaded', loadProteinList);
+
+        async function loadProteinList() {
+            try {
+                const response = await fetch(localProteinFile);
+                if (response.ok) {
+                    proteinList = await response.json();
+                }
+            } catch (e) {
+                console.warn('Local protein fallback not available:', e);
+            }
+        }
+
+        function handleSearchKey(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                resolveAndLoadPDB();
+            }
+        }
 
         // ==========================================
-        // 2. PREDICTIVE SEARCH LOGIC (UI Layer)
+        // 2. PREDICTIVE SEARCH LOGIC (UI Layer) - API BASED
         // ==========================================
+        function getSearchScore(entry, input) {
+            const name = entry.name.toLowerCase();
+            const code = entry.code.toLowerCase();
+            let score = 0;
+
+            if (code === input) score += 300;
+            if (name === input) score += 250;
+            if (name.startsWith(input)) score += 180;
+            if (code.startsWith(input)) score += 160;
+            if (name.includes(input)) score += 100;
+            if (input.split(' ').every(term => name.includes(term))) score += 20;
+
+            // Prefer shorter, more exact names when scores tie
+            score += Math.max(0, 20 - Math.min(20, name.length / 10));
+            return score;
+        }
+
         function filterSearch() {
             let input = document.getElementById('pdbInput').value.toLowerCase();
             let dropdown = document.getElementById('searchDropdown');
             dropdown.innerHTML = ""; // Clear old results
 
-            if (!input) {
+            clearTimeout(searchTimeout);
+            if (!input || input.length < 2) {
                 dropdown.classList.add('hidden');
                 return;
             }
 
-            // Find matching proteins
-            let matches = commonProteins.filter(p => 
-                p.name.toLowerCase().includes(input) || p.code.toLowerCase().includes(input)
-            );
+            const localMatches = proteinList
+                .map(p => ({ ...p, score: getSearchScore(p, input) }))
+                .filter(p => p.score > 0)
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 6);
 
-            if (matches.length > 0) {
+            if (localMatches.length > 0) {
                 dropdown.classList.remove('hidden');
-                matches.forEach(match => {
+                localMatches.forEach(match => {
                     let li = document.createElement('li');
-                    li.className = "px-4 py-3 hover:bg-gray-700 cursor-pointer flex justify-between items-center border-b border-gray-700 last:border-0";
-                    li.innerHTML = `<span class="text-white">${match.name}</span> <span class="text-xs bg-blue-900 text-blue-300 px-2 py-1 rounded font-mono">${match.code}</span>`;
-                    
-                    // When clicked, fill input and load!
+                    li.className = "px-4 py-3 hover:bg-slate-700 cursor-pointer flex justify-between items-center border-b border-slate-700 last:border-0";
+                    li.innerHTML = `<span class="text-white">${match.name}</span> <span class="text-xs bg-slate-900 text-sky-300 px-2 py-1 rounded font-mono">${match.code}</span>`;
                     li.onclick = () => {
                         document.getElementById('pdbInput').value = match.code;
                         dropdown.classList.add('hidden');
-                        resolveAndLoadPDB(); 
+                        resolveAndLoadPDB();
                     };
                     dropdown.appendChild(li);
                 });
-            } else {
-                dropdown.classList.add('hidden');
+                return;
             }
+
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const response = await fetch(`https://search.rcsb.org/search/autocomplete?q=${encodeURIComponent(input)}&json=1&type=polymer_entity`);
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        dropdown.classList.remove('hidden');
+                        data.slice(0, 5).forEach(item => {
+                            let li = document.createElement('li');
+                            li.className = "px-4 py-3 hover:bg-slate-700 cursor-pointer flex justify-between items-center border-b border-slate-700 last:border-0";
+                            li.innerHTML = `<span class="text-white">${item.text}</span>`;
+                            li.onclick = () => {
+                                document.getElementById('pdbInput').value = item.text;
+                                dropdown.classList.add('hidden');
+                                resolveAndLoadPDB();
+                            };
+                            dropdown.appendChild(li);
+                        });
+                    } else {
+                        dropdown.classList.add('hidden');
+                    }
+                } catch (e) {
+                    dropdown.classList.add('hidden');
+                }
+            }, 250); // Debounce 250ms
         }
 
         // Hide dropdown if user clicks somewhere else on the screen
@@ -114,8 +289,9 @@
 
             if (!input) { alert("Please enter a protein name or PDB ID!"); return; }
             
+            document.getElementById('controlPanel').classList.remove('hidden');
             document.getElementById('searchDropdown').classList.add('hidden');
-            container.innerHTML = "<p class='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-400 animate-pulse'>Loading structure...</p>";
+            container.innerHTML = "<p class='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-sky-300 animate-pulse'>Loading structure...</p>";
 
             // Check if it's a 4-letter PDB code directly
             if (input.length === 4 && /^[a-zA-Z0-9]+$/.test(input)) {
@@ -123,7 +299,18 @@
                 return;
             }
 
-            // Fallback: Search RCSB API for names not in our dictionary
+            // Check local protein list first
+            const query = input.toLowerCase();
+            const localMatch = proteinList
+                .map(p => ({ ...p, score: getSearchScore(p, query) }))
+                .filter(p => p.score > 0)
+                .sort((a, b) => b.score - a.score)[0];
+            if (localMatch) {
+                renderPDB(localMatch.code, container);
+                return;
+            }
+
+            // Search RCSB API for the input (name or partial)
             try {
                 const response = await fetch("https://search.rcsb.org/rcsbsearch/v2/query", {
                     method: "POST",
@@ -152,7 +339,7 @@
         function renderPDB(pdbID, containerElement) {
             containerElement.innerHTML = ""; 
             let config = { backgroundColor: 'black' };
-            let viewer = $3Dmol.createViewer(containerElement, config);
+            viewer = $3Dmol.createViewer(containerElement, config);
             let uri = "https://files.rcsb.org/download/" + pdbID + ".pdb";
             
             jQuery.ajax({
@@ -201,11 +388,90 @@
                     );
 
                     viewer.render();                                    
+                    
+                    // Fetch and display protein info
+                    fetchProteinInfo(pdbID);
                 },
                 error: function() {
                     containerElement.innerHTML = "<p class='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-red-500'>Failed to load ID: " + pdbID + "</p>";
                 }
             });
+        }
+
+        // ==========================================
+        // 6. FETCH PROTEIN INFO
+        // ==========================================
+        async function fetchProteinInfo(pdbID) {
+            try {
+                const response = await fetch(`https://data.rcsb.org/rest/v1/core/entry/${pdbID.toLowerCase()}`);
+                if (!response.ok) throw new Error();
+                const data = await response.json();
+                const title = data.struct?.title || 'Unknown';
+                const method = data.exptl?.[0]?.method || 'Unknown';
+                const resolution = data.refine?.ls_d_res_high ? `${data.refine.ls_d_res_high} Å` : 'N/A';
+                const organism = data.struct?.pdbx_descriptor || 'Unknown';
+                document.getElementById('infoText').innerHTML = `
+                    <div class="bg-gray-700/50 p-3 rounded-lg">
+                        <strong class="text-blue-400">PDB ID:</strong> ${pdbID.toUpperCase()}
+                    </div>
+                    <div class="bg-gray-700/50 p-3 rounded-lg">
+                        <strong class="text-green-400">Title:</strong> ${title}
+                    </div>
+                    <div class="bg-gray-700/50 p-3 rounded-lg">
+                        <strong class="text-purple-400">Method:</strong> ${method}
+                    </div>
+                    <div class="bg-gray-700/50 p-3 rounded-lg">
+                        <strong class="text-red-400">Resolution:</strong> ${resolution}
+                    </div>
+                    <div class="bg-gray-700/50 p-3 rounded-lg col-span-2">
+                        <strong class="text-yellow-400">Organism:</strong> ${organism}
+                    </div>
+                `;
+                document.getElementById('proteinInfo').classList.remove('hidden');
+            } catch (e) {
+                document.getElementById('proteinInfo').classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // 5. VISUALIZATION CONTROLS
+        // ==========================================
+        function setCartoon() {
+            if (viewer) {
+                viewer.setStyle({}, {cartoon: {color: 'spectrum'}});
+                viewer.render();
+            }
+        }
+
+        function setStick() {
+            if (viewer) {
+                viewer.setStyle({}, {stick: {}});
+                viewer.render();
+            }
+        }
+
+        function setSphere() {
+            if (viewer) {
+                viewer.setStyle({}, {sphere: {}});
+                viewer.render();
+            }
+        }
+
+        function resetView() {
+            if (viewer) {
+                viewer.zoomTo();
+                viewer.render();
+            }
+        }
+
+        function clearViewer() {
+            if (viewer) {
+                viewer.clear();
+                viewer = null;
+            }
+            document.getElementById('container-01').innerHTML = "<p class='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-500'>Structure will load here...</p>";
+            document.getElementById('proteinInfo').classList.add('hidden');
+            document.getElementById('controlPanel').classList.add('hidden');
         }
     </script>
 </body>
