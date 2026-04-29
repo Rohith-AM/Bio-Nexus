@@ -45,25 +45,65 @@ export const DrawerSystem = {
         } else if(moduleName === 'info') {
             const data = await APICore.fetchInfo(this.currentSpecies);
             content.innerHTML = '';
-            
-            // Render Taxonomy Tree
-            if(data.taxa && data.taxa.length > 0) {
+
+            if (data.image) {
+                content.innerHTML += `
+                    <div class="mb-6 rounded-3xl overflow-hidden border border-slate-700 shadow-inner bg-slate-900">
+                        <img src="${data.image}" alt="${data.commonName || data.speciesName || this.currentSpecies}" class="w-full h-56 object-cover">
+                    </div>
+                `;
+            }
+
+            if (data.taxa && data.taxa.length > 0) {
+                const rankStyle = (rank) => {
+                    const styles = {
+                        kingdom: 'text-purple-300 border-purple-400 bg-purple-950/30',
+                        phylum: 'text-sky-300 border-sky-400 bg-sky-950/30',
+                        class: 'text-cyan-300 border-cyan-400 bg-cyan-950/30',
+                        order: 'text-emerald-300 border-emerald-400 bg-emerald-950/30',
+                        family: 'text-amber-300 border-amber-400 bg-amber-950/30',
+                        genus: 'text-orange-300 border-orange-400 bg-orange-950/30',
+                        species: 'text-fuchsia-300 border-fuchsia-400 bg-fuchsia-950/30 italic',
+                        subspecies: 'text-pink-300 border-pink-400 bg-pink-950/30 italic',
+                        variety: 'text-lime-300 border-lime-400 bg-lime-950/30',
+                        form: 'text-slate-300 border-slate-500 bg-slate-950/30',
+                        unknown: 'text-slate-300 border-slate-600 bg-slate-950/30'
+                    };
+                    return styles[rank] || styles.unknown;
+                };
+
                 let taxaHtml = `<div class="mb-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700 shadow-inner"><h3 class="text-sm font-bold text-blue-400 mb-3 border-b border-slate-700 pb-2">Evolutionary Lineage</h3><div class="flex flex-wrap gap-2 text-xs font-mono">`;
                 data.taxa.forEach((t, i) => {
-                    taxaHtml += `<span class="bg-slate-900 px-2 py-1 rounded border border-slate-600 group relative cursor-help"><span class="text-slate-400">${t.rank}:</span> <span class="${t.rank === 'species' ? 'text-emerald-400 italic' : 'text-slate-200'}">${t.name}</span></span>`;
+                    const commonLabel = t.commonName ? `<br><span class="text-[10px] text-slate-400 italic">${t.commonName}</span>` : '';
+                    const style = rankStyle(t.rank);
+                    taxaHtml += `<span class="px-3 py-2 rounded-2xl border ${style} group relative cursor-help min-w-[110px]">`;
+                    taxaHtml += `<span class="block text-[10px] uppercase tracking-[0.18em] text-slate-400">${t.rank}</span>`;
+                    taxaHtml += `<span class="block font-semibold text-sm mt-1 ${t.rank === 'species' ? 'italic' : ''}">${t.name}</span>`;
+                    if (commonLabel) taxaHtml += `<span class="block mt-1 text-[10px] text-slate-400 italic">${t.commonName}</span>`;
+                    taxaHtml += `</span>`;
                     if(i < data.taxa.length - 1) taxaHtml += `<span class="text-slate-600 mt-1">▶</span>`;
                 });
                 taxaHtml += `</div></div>`;
                 content.innerHTML += taxaHtml;
+            } else {
+                content.innerHTML += `<div class="mb-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700 shadow-inner text-slate-400 text-sm">Taxonomic lineage not available for this entry.</div>`;
             }
 
-            // Render Wiki Summary
             content.innerHTML += `
                 <div class="p-5 bg-slate-800/50 rounded-xl border-l-4 border-yellow-500 shadow-inner">
                     <h3 class="text-xs font-bold text-yellow-500 uppercase tracking-widest mb-2">Wikipedia Abstract</h3>
                     <p class="text-slate-300 text-sm leading-relaxed">${data.summary || 'Summary not available for this entity.'}</p>
                 </div>
             `;
+
+            if (data.eolUrl) {
+                content.innerHTML += `
+                    <div class="mt-4 p-4 bg-slate-800/60 rounded-xl border border-green-500 shadow-inner">
+                        <h3 class="text-xs font-bold text-green-400 uppercase tracking-widest mb-2">Encyclopedia of Life</h3>
+                        <a href="${data.eolUrl}" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-green-200 hover:text-white bg-slate-900/70 px-4 py-3 rounded-xl border border-green-600 transition">Open EoL Page</a>
+                    </div>
+                `;
+            }
 
         // 4. LITERATURE LOGIC (NEW)
         } else if(moduleName === 'literature') {
