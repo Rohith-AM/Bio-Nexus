@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reverse Complement | Bio-Nexus</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="tool-shell.css">
     <script>
     // Check local storage and apply the theme immediately
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -32,7 +33,7 @@
         body { font-family: 'Space Grotesk', sans-serif; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-200 min-h-screen p-6 flex flex-col items-center">
+<body class="tool-body bg-slate-900 text-slate-200 min-h-screen p-6 flex flex-col items-center">
 
     <nav class="w-full max-w-4xl mb-8 flex justify-between items-center">
         <a href="../index.html" class="flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition">

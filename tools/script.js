@@ -65,6 +65,33 @@ function analyzeDNA() {
     document.getElementById('proteinContainer').classList.remove('hidden');
 }
 
+function clearDNA() {
+    document.getElementById('dnaInput').value = '';
+    document.getElementById('lengthDisplay').innerText = '0 bp';
+    document.getElementById('gcDisplay').innerText = '0%';
+    document.getElementById('typeDisplay').innerText = '-';
+    document.getElementById('typeDisplay').className = 'text-lg font-bold text-blue-400';
+    document.getElementById('rnaResult').innerText = '---';
+    document.getElementById('proteinDisplay').innerText = '---';
+    document.getElementById('results').classList.add('hidden');
+    document.getElementById('rnaContainer').classList.add('hidden');
+    document.getElementById('proteinContainer').classList.add('hidden');
+}
+
+function copyOutput(elementId) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    const text = element.innerText.trim();
+    if (!text || text === '---') return;
+    navigator.clipboard.writeText(text).then(() => {
+        const original = element.innerText;
+        element.innerText = 'Copied!';
+        setTimeout(() => {
+            element.innerText = original;
+        }, 1200);
+    });
+}
+
 // ==========================================
 // 👷 3. HELPER FUNCTIONS
 // ==========================================
