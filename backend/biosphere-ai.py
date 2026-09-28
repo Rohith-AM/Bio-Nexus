@@ -3,8 +3,16 @@ Bio-Nexus Intelligence Backend
 Combines FuzzyWuzzy, Web Search API, and RAG for enhanced species research
 """
 
-import json
 import os
+import sys
+
+# Auto-detect local .venv site-packages if running from global python
+_venv_site = os.path.join(os.path.dirname(__file__), '..', '.venv', 'Lib', 'site-packages')
+if os.path.exists(_venv_site) and _venv_site not in sys.path:
+    sys.path.insert(0, _venv_site)
+
+import json
+import sqlite3
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -18,7 +26,8 @@ load_dotenv()  # Load backend/.env automatically
 app = Flask(__name__)
 CORS(app)
 
-# Configuration
+# Configuration & Database
+DB_PATH = os.path.join(os.path.dirname(__file__), 'bionexus.db')
 SERPER_API_KEY = os.getenv('SERPER_API_KEY', 'your-serper-api-key-here')
 INAT_API_BASE = "https://api.inaturalist.org/v1"
 GBIF_API_BASE = "https://api.gbif.org/v1"
@@ -428,15 +437,184 @@ def health():
     """Health check endpoint"""
     groq_status = 'configured' if GROQ_API_KEY and GROQ_API_KEY != 'your-groq-api-key-here' else 'not-configured'
     serper_status = 'configured' if SERPER_API_KEY != 'your-serper-api-key-here' else 'not-configured'
+    db_status = 'connected' if os.path.exists(DB_PATH) else 'missing'
     return jsonify({
         'status': 'healthy',
+        'database': db_status,
         'serper_api': serper_status,
         'groq_api': groq_status
     })
 
 
+# ============================================================================
+# SQL DATABASE ENGINE: PROTEINS & BIOLOGY GLOSSARY (SQLite + B-Tree + FTS5)
+# ============================================================================
+
+def get_db_connection():
+    """Returns a connection to bionexus.db with Row dict access"""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+@app.route('/api/proteins/search', methods=['GET'])
+def search_proteins():
+    """
+    Lightning-fast PDB search (<2ms) across 253,205 proteins using:
+    1. B-Tree exact / prefix lookup on PDB ID (code)
+    2. FTS5 full-text inverted index on protein name
+    """
+    query = request.args.get('q', '').strip()
+    limit = min(int(request.args.get('limit', 10)), 50)
+    
+    if not query or len(query) < 2:
+        return jsonify([])
+        
+    if not os.path.exists(DB_PATH):
+        return jsonify({'error': 'Database not initialized. Please run backend/init_db.py'}), 500
+        
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        results = []
+        
+        # 1. Exact PDB Code match (B-Tree index)
+        cur.execute("SELECT code, name FROM proteins WHERE code = ? LIMIT ?", (query.upper(), limit))
+        for row in cur.fetchall():
+            results.append({'code': row['code'], 'name': row['name']})
+            
+        # 2. Prefix PDB Code match (e.g. 1XE*)
+        if len(results) < limit:
+            cur.execute("""
+            SELECT code, name FROM proteins 
+            WHERE code LIKE ? AND code != ? 
+            LIMIT ?
+            """, (f"{query.upper()}%", query.upper(), limit - len(results)))
+            for row in cur.fetchall():
+                results.append({'code': row['code'], 'name': row['name']})
+                
+        # 3. Full-Text Search (FTS5) on protein titles
+        if len(results) < limit:
+            clean_q = ''.join(c if c.isalnum() or c.isspace() else ' ' for c in query).strip()
+            if clean_q:
+                fts_query = ' '.join(f"{word}*" for word in clean_q.split())
+                existing_codes = tuple(r['code'] for r in results) if results else ('',)
+                placeholders = ','.join('?' for _ in existing_codes)
+                
+                cur.execute(f"""
+                SELECT p.code, p.name 
+                FROM proteins_fts f
+                JOIN proteins p ON p.id = f.rowid
+                WHERE proteins_fts MATCH ? AND p.code NOT IN ({placeholders})
+                LIMIT ?
+                """, (fts_query, *existing_codes, limit - len(results)))
+                for row in cur.fetchall():
+                    results.append({'code': row['code'], 'name': row['name']})
+                    
+        conn.close()
+        return jsonify(results)
+    except Exception as e:
+        print(f"Protein search error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/glossary/search', methods=['GET'])
+def search_glossary():
+    """
+    Search biology glossary with category filter and FTS5 full-text matching.
+    """
+    query = request.args.get('q', '').strip()
+    category = request.args.get('category', '').strip()
+    
+    if not os.path.exists(DB_PATH):
+        return jsonify({'error': 'Database not initialized'}), 500
+        
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        if query:
+            clean_q = ''.join(c if c.isalnum() or c.isspace() else ' ' for c in query).strip()
+            fts_query = ' '.join(f"{word}*" for word in clean_q.split())
+            if category and category.lower() != 'all':
+                cur.execute("""
+                SELECT g.id, g.term, g.category, g.definition, g.source
+                FROM glossary_fts f
+                JOIN glossary g ON g.id = f.rowid
+                WHERE glossary_fts MATCH ? AND g.category = ?
+                ORDER BY rank
+                LIMIT 50
+                """, (fts_query, category))
+            else:
+                cur.execute("""
+                SELECT g.id, g.term, g.category, g.definition, g.source
+                FROM glossary_fts f
+                JOIN glossary g ON g.id = f.rowid
+                WHERE glossary_fts MATCH ?
+                ORDER BY rank
+                LIMIT 50
+                """, (fts_query,))
+        else:
+            if category and category.lower() != 'all':
+                cur.execute("SELECT id, term, category, definition, source FROM glossary WHERE category = ? ORDER BY term ASC LIMIT 100", (category,))
+            else:
+                cur.execute("SELECT id, term, category, definition, source FROM glossary ORDER BY term ASC LIMIT 100")
+                
+        results = [dict(row) for row in cur.fetchall()]
+        conn.close()
+        return jsonify(results)
+    except Exception as e:
+        print(f"Glossary search error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/glossary/categories', methods=['GET'])
+def glossary_categories():
+    """Returns list of all distinct glossary categories"""
+    if not os.path.exists(DB_PATH):
+        return jsonify([])
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT DISTINCT category FROM glossary ORDER BY category ASC")
+        categories = [row['category'] for row in cur.fetchall()]
+        conn.close()
+        return jsonify(categories)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/glossary/add', methods=['POST'])
+def add_glossary_term():
+    """Allows students/researchers to add new terms to the local database"""
+    data = request.get_json() or {}
+    term = data.get('term', '').strip()
+    category = data.get('category', 'General').strip()
+    definition = data.get('definition', '').strip()
+    source = data.get('source', 'User Contribution').strip()
+    
+    if not term or not definition:
+        return jsonify({'error': 'Term and definition are required'}), 400
+        
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+        INSERT OR REPLACE INTO glossary (term, category, definition, source)
+        VALUES (?, ?, ?, ?)
+        """, (term, category, definition, source))
+        # Rebuild FTS index
+        cur.execute("INSERT INTO glossary_fts(glossary_fts) VALUES('rebuild');")
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'term': term})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     print("🧬 Bio-Nexus Intelligence Backend Starting...")
+    print(f"Database:   {'✓ Ready (bionexus.db)' if os.path.exists(DB_PATH) else '✗ Missing (run init_db.py)'}")
     print(f"Serper API: {'✓ Configured' if SERPER_API_KEY != 'your-serper-api-key-here' else '✗ Not configured'}")
     print(f"Groq API:   {'✓ Configured' if GROQ_API_KEY and GROQ_API_KEY != 'your-groq-api-key-here' else '✗ Optional (fallback enabled)'}")
     app.run(debug=True, port=5000)

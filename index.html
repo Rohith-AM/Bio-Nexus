@@ -314,14 +314,29 @@
 <div id="glossary-modal" class="modal hidden">
     <div class="modal-box">
         <div class="modal-header">
-            <span>📖 Biology Glossary</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span>📖 Biology Glossary</span>
+                <span id="glossary-count" style="font-size: 11px; font-weight: 600; color: var(--accent); background: rgba(217,119,87,0.12); padding: 2px 8px; border-radius: 10px;">126 Terms</span>
+            </div>
             <button onclick="toggleGlossary()">✕</button>
         </div>
-        <input type="text" id="glossary-search" placeholder="Search terms..." oninput="filterGlossary(this.value)">
+        <input type="text" id="glossary-search" placeholder="Search terms (e.g. enzyme, mitosis, CRISPR)..." oninput="filterGlossary(this.value)">
+        <div id="glossary-category-pills">
+            <button class="g-pill active" onclick="setGlossaryCategory('all', this)">All</button>
+            <button class="g-pill" onclick="setGlossaryCategory('Genetics', this)">Genetics</button>
+            <button class="g-pill" onclick="setGlossaryCategory('Molecular Biology', this)">Mol Bio</button>
+            <button class="g-pill" onclick="setGlossaryCategory('Biotechnology', this)">Biotech</button>
+            <button class="g-pill" onclick="setGlossaryCategory('Cell Biology', this)">Cell Bio</button>
+            <button class="g-pill" onclick="setGlossaryCategory('Biochemistry', this)">Biochem</button>
+            <button class="g-pill" onclick="setGlossaryCategory('Ecology', this)">Ecology</button>
+            <button class="g-pill" onclick="setGlossaryCategory('Evolution', this)">Evolution</button>
+            <button class="g-pill" onclick="setGlossaryCategory('Physiology', this)">Physiology</button>
+        </div>
         <div id="glossary-list"></div>
     </div>
 </div>
 
+<script src="js/glossary-data.js"></script>
 <script>
 // ===== PANEL TOGGLES =====
 function toggleLeft() {
@@ -415,49 +430,104 @@ function resetTimer() {
     document.getElementById('timer-display').textContent = '00:00';
 }
 
-// ===== GLOSSARY =====
-const glossaryTerms = [
-    { term: 'Allele', def: 'Alternative form of a gene at a given locus.' },
-    { term: 'Biodiversity', def: 'Variety of life in a particular habitat or ecosystem.' },
-    { term: 'Chromosome', def: 'Thread-like structure of DNA carrying genetic information.' },
-    { term: 'DNA', def: 'Deoxyribonucleic acid — molecule carrying genetic instructions.' },
-    { term: 'Ecosystem', def: 'Community of organisms interacting with their environment.' },
-    { term: 'Enzyme', def: 'Protein that acts as a biological catalyst.' },
-    { term: 'Gene', def: 'Unit of heredity — a sequence of DNA encoding a protein.' },
-    { term: 'Hardy-Weinberg', def: 'Principle describing allele frequency equilibrium in populations.' },
-    { term: 'Homeostasis', def: 'Maintenance of stable internal conditions in an organism.' },
-    { term: 'Meiosis', def: 'Cell division producing four haploid daughter cells.' },
-    { term: 'Mitosis', def: 'Cell division producing two identical diploid daughter cells.' },
-    { term: 'Mutation', def: 'Change in DNA sequence that may alter gene function.' },
-    { term: 'Natural Selection', def: 'Process by which favorable traits become more common.' },
-    { term: 'Nucleotide', def: 'Building block of DNA/RNA — base, sugar, phosphate.' },
-    { term: 'Osmosis', def: 'Movement of water across a semi-permeable membrane.' },
-    { term: 'Phenotype', def: 'Observable characteristics of an organism.' },
-    { term: 'Photosynthesis', def: 'Process by which plants convert light energy to glucose.' },
-    { term: 'Protein', def: 'Large biomolecule made of amino acid chains.' },
-    { term: 'RNA', def: 'Ribonucleic acid — involved in protein synthesis.' },
-    { term: 'Shannon Index', def: 'Measure of species diversity in a community (H\').' },
-    { term: 'Species Richness', def: 'Number of different species in a given area.' },
-    { term: 'Transcription', def: 'Process of copying DNA into mRNA.' },
-    { term: 'Translation', def: 'Process of synthesizing protein from mRNA.' },
-    { term: 'Trophic Level', def: 'Position of organism in food chain.' },
-];
+// ===== GLOSSARY (SQL ENGINE WITH LOCAL OFFLINE FALLBACK) =====
+const SQL_BACKEND_URL = 'http://localhost:5000/api';
+let activeGlossaryCategory = 'all';
+let glossaryDebounceTimer;
+
+// Load 126+ terms from js/glossary-data.js (or fallback array)
+const fallbackGlossaryTerms = (typeof window !== 'undefined' && window.fallbackGlossaryTerms) ? window.fallbackGlossaryTerms : [];
 
 function renderGlossary(terms) {
-    document.getElementById('glossary-list').innerHTML = terms.map(t =>
-        `<div class="glossary-item"><span class="g-term">${t.term}</span><span class="g-def">${t.def}</span></div>`
-    ).join('');
+    const container = document.getElementById('glossary-list');
+    const countBadge = document.getElementById('glossary-count');
+    if (countBadge) {
+        countBadge.textContent = `${terms ? terms.length : 0} Terms`;
+    }
+    if (!terms || terms.length === 0) {
+        container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text3); font-size: 13px;">No terms found.</div>';
+        return;
+    }
+    container.innerHTML = terms.map(t => `
+        <div class="glossary-item">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+                <span class="g-term">${t.term}</span>
+                ${t.category ? `<span style="font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 4px; background: rgba(217,119,87,0.15); color: var(--accent); white-space: nowrap;">${t.category}</span>` : ''}
+            </div>
+            <span class="g-def">${t.definition || t.def}</span>
+            ${t.source ? `<span style="font-size: 10px; color: var(--text3); margin-top: 3px;">Source: ${t.source}</span>` : ''}
+        </div>
+    `).join('');
 }
+
+function getFilteredLocalTerms(query = '', category = 'all') {
+    let filtered = fallbackGlossaryTerms;
+    if (category && category !== 'all') {
+        filtered = filtered.filter(t => t.category && t.category.toLowerCase() === category.toLowerCase());
+    }
+    if (query) {
+        const q = query.toLowerCase();
+        filtered = filtered.filter(t => t.term.toLowerCase().includes(q) || (t.def && t.def.toLowerCase().includes(q)));
+    }
+    return filtered;
+}
+
+let backendStatus = 'unknown'; // 'unknown', 'online', 'offline'
+
+async function fetchAndRenderGlossary(query = '', category = activeGlossaryCategory) {
+    // 1. Instant local render (0ms - buttery smooth 60fps UI!)
+    renderGlossary(getFilteredLocalTerms(query, category));
+
+    // 2. If backend already marked offline, skip network delay
+    if (backendStatus === 'offline') return;
+
+    // 3. Silent background fetch from Bio-Nexus SQLite Engine
+    try {
+        const catParam = category && category !== 'all' ? `&category=${encodeURIComponent(category)}` : '';
+        const qParam = query ? `q=${encodeURIComponent(query)}` : '';
+        const res = await fetch(`${SQL_BACKEND_URL}/glossary/search?${qParam}${catParam}`, {
+            signal: AbortSignal.timeout(350)
+        });
+        if (res.ok) {
+            const data = await res.json();
+            backendStatus = 'online';
+            if (data && data.length > 0) {
+                renderGlossary(data);
+            }
+        }
+    } catch (e) {
+        backendStatus = 'offline';
+        // Retry probe after 20 seconds
+        setTimeout(() => { backendStatus = 'unknown'; }, 20000);
+    }
+}
+
 function filterGlossary(val) {
-    renderGlossary(glossaryTerms.filter(t =>
-        t.term.toLowerCase().includes(val.toLowerCase()) ||
-        t.def.toLowerCase().includes(val.toLowerCase())
-    ));
+    clearTimeout(glossaryDebounceTimer);
+    glossaryDebounceTimer = setTimeout(() => {
+        fetchAndRenderGlossary(val, activeGlossaryCategory);
+    }, 100);
 }
+
+function setGlossaryCategory(cat, btn) {
+    activeGlossaryCategory = cat;
+    document.querySelectorAll('.g-pill').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    const searchVal = document.getElementById('glossary-search').value;
+    fetchAndRenderGlossary(searchVal, cat);
+}
+
+let isGlossaryModalOpen = false;
+
 function toggleGlossary() {
-    document.getElementById('glossary-modal').classList.toggle('hidden');
-    if (!document.getElementById('glossary-modal').classList.contains('hidden')) {
-        renderGlossary(glossaryTerms);
+    const modal = document.getElementById('glossary-modal');
+    modal.classList.toggle('hidden');
+    isGlossaryModalOpen = !modal.classList.contains('hidden');
+    if (isGlossaryModalOpen) {
+        document.getElementById('glossary-search').value = '';
+        fetchAndRenderGlossary('', activeGlossaryCategory);
+    } else {
+        requestAnimationFrame(drawParticles);
     }
 }
 
@@ -486,6 +556,7 @@ function initParticles() {
 }
 
 function drawParticles() {
+    if (isGlossaryModalOpen) return; // Pause while modal is open to ensure 100% fluid hover & zero GPU lag
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     particles.forEach(p => {
         ctx.beginPath();
