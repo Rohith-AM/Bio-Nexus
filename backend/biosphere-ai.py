@@ -318,28 +318,32 @@ INSTRUCTIONS:
 3. NEVER ask them to re-paste their DNA, PDB, or organism if it is already present in the active data above.
 4. Keep your answer scientifically precise, concise, and structured with bold highlights."""
 
-            groq_res = requests.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {GROQ_API_KEY}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": "llama-3.3-70b-versatile",
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": message}
-                    ],
-                    "temperature": 0.6,
-                    "max_tokens": 1024
-                },
-                timeout=12
-            )
-            
-            if groq_res.status_code == 200:
-                bot_reply = groq_res.json().get('choices', [{}])[0].get('message', {}).get('content')
-                if bot_reply:
-                    return jsonify({'reply': bot_reply})
+            for model_id in ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]:
+                try:
+                    groq_res = requests.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {GROQ_API_KEY}",
+                            "Content-Type": "application/json"
+                        },
+                        json={
+                            "model": model_id,
+                            "messages": [
+                                {"role": "system", "content": system_prompt},
+                                {"role": "user", "content": message}
+                            ],
+                            "temperature": 0.6,
+                            "max_tokens": 1024
+                        },
+                        timeout=12
+                    )
+                    
+                    if groq_res.status_code == 200:
+                        bot_reply = groq_res.json().get('choices', [{}])[0].get('message', {}).get('content')
+                        if bot_reply:
+                            return jsonify({'reply': bot_reply})
+                except Exception as model_err:
+                    print(f"Groq Chat model {model_id} error: {model_err}")
         except Exception as e:
             print(f"Groq Chat exception: {e}")
 
