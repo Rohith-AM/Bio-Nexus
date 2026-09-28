@@ -70,6 +70,10 @@
                 <span class="tool-dot" style="background:#D97757"></span>
                 <span>Rev-Comp Generator</span>
             </a>
+            <a href="tools/gel-electrophoresis.html" class="tool-item" data-tags="gel electrophoresis dna agarose simulation band run">
+                <span class="tool-dot" style="background:#D97757"></span>
+                <span>Gel Electrophoresis</span>
+            </a>
         </div>
 
         <div class="panel-section-title">🔬 Structure Tools</div>
@@ -165,6 +169,14 @@
                             <div>
                                 <div class="stack-item-name">Rev-Comp Generator</div>
                                 <div class="stack-item-desc">Reverse & complement strands</div>
+                            </div>
+                            <span class="launch">→</span>
+                        </a>
+                        <a href="tools/gel-electrophoresis.html" class="stack-item">
+                            <span>🧫</span>
+                            <div>
+                                <div class="stack-item-name">Gel Electrophoresis</div>
+                                <div class="stack-item-desc">Simulate DNA migration on agarose gel</div>
                             </div>
                             <span class="launch">→</span>
                         </a>
@@ -506,7 +518,37 @@ resizeCanvas();
 initParticles();
 drawParticles();
 window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
-</script>
 
+// Dr. Nexus Page Context Provider for Hub
+window.nexusContext = function() {
+    const noteText = document.getElementById('quick-notes')?.value.trim();
+    return {
+        tool: "Bio-Nexus Main Research Hub",
+        icon: "🧬",
+        accent: "#D97757",
+        active: true,
+        summary: "Bio-Nexus Hub · All 6 tools active",
+        quickPrompts: [
+            "Which tool should I use for plasmid cloning and restriction digest?",
+            "How does the agarose gel electrophoresis simulation calculate migration?",
+            "What bioinformatics resources are available across Bio-Nexus?"
+        ],
+        data: {
+            platform: "Bio-Nexus v2.0.0",
+            availableTools: [
+                "DNA Sequence Analyzer",
+                "Restriction Mapper",
+                "Rev-Comp Generator",
+                "Gel Electrophoresis Simulator",
+                "3D Mol-Viewer",
+                "Species Explorer",
+                "Bio-Nexus Intelligence Engine"
+            ],
+            userQuickNotes: noteText || null
+        }
+    };
+};
+</script>
+<script src="js/nexus-widget.js"></script>
 </body>
 </html>

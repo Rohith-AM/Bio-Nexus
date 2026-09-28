@@ -1,251 +1,385 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bio-Nexus | Advanced Intelligence</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Species Explorer — Bio-Nexus</title>
     <link rel="stylesheet" href="tool-shell.css">
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Space Grotesk', 'sans-serif'] },
-                    colors: { bio: { dark: '#0f172a' } }
-                }
-            }
-        }
-    </script>
-    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
-        
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; border-radius: 8px;}
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #6366f1; }
-        
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-up { animation: fadeUp 0.6s ease-out forwards; }
-        
-        .glass-card {
-            background: rgba(30, 41, 59, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            transition: all 0.3s ease;
+        :root { --tool-accent: #10B981; }
+
+        /* Autocomplete inside nt-search-wrap */
+        .nt-search-wrap { position: relative; }
+
+        #suggestions {
+            position: absolute;
+            left: 0; right: 0; top: calc(100% + 4px);
+            z-index: 300;
+            background: var(--bg2);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+            max-height: 220px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--bg4) transparent;
         }
-        .glass-card:hover { border-color: rgba(99, 102, 241, 0.4); }
-        .suggestion-item:hover { background-color: rgba(79, 70, 229, 0.2); cursor: pointer; }
+        .suggestion-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            gap: 12px;
+            transition: background 0.1s;
+            font-size: 13px;
+        }
+        .suggestion-item:last-child { border-bottom: none; }
+        .suggestion-item:hover { background: var(--bg3); }
+        .suggestion-item-rank {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text3);
+            font-family: var(--font-mono);
+            flex-shrink: 0;
+        }
+
+        /* Loader */
+        #loader { display: none; flex-direction: column; align-items: center; padding: 48px 0; }
+        .loader-ring {
+            width: 36px; height: 36px;
+            border: 2px solid var(--border2);
+            border-top-color: var(--tool-accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Species / Topic dashboard cards */
+        .result-hero {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        @media (max-width: 600px) { .result-hero { flex-direction: column; } }
+
+        .result-img {
+            width: 140px;
+            height: 140px;
+            border-radius: var(--radius);
+            object-fit: cover;
+            border: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .result-img-placeholder {
+            width: 140px;
+            height: 140px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--bg3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            flex-shrink: 0;
+            color: var(--text3);
+        }
+
+        .result-title { font-size: 24px; font-weight: 700; color: var(--text); margin-bottom: 2px; text-transform: capitalize; }
+        .result-subtitle { font-size: 13px; color: var(--tool-accent); font-style: italic; font-family: var(--font-mono); margin-bottom: 12px; }
+
+        .taxonomy-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--text3);
+            margin-bottom: 12px;
+        }
+
+        .wiki-desc {
+            font-size: 13px;
+            color: var(--text2);
+            line-height: 1.75;
+            border-left: 2px solid var(--tool-accent);
+            padding-left: 12px;
+        }
+
+        /* Taxa lineage */
+        .taxa-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            cursor: help;
+            position: relative;
+        }
+        .taxa-item:hover .taxa-tooltip { display: block; }
+        .taxa-tooltip {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg2);
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 10px;
+            white-space: nowrap;
+            z-index: 50;
+            color: var(--text);
+            text-transform: capitalize;
+        }
+        .taxa-sep { color: var(--text3); font-size: 9px; margin: 0 2px; }
+
+        /* Image grid */
+        .img-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .img-cell {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            height: 140px;
+            background: var(--bg3);
+        }
+        .img-cell img {
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform 0.5s ease, opacity 0.3s;
+            opacity: 0.85;
+        }
+        .img-cell:hover img { transform: scale(1.06); opacity: 1; }
+        .img-source {
+            position: absolute;
+            bottom: 6px;
+            left: 6px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: rgba(0,0,0,0.65);
+            color: #fff;
+        }
+
+        /* Audio card */
+        .audio-card {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px 14px;
+        }
+        .audio-card + .audio-card { margin-top: 6px; }
+        .audio-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; }
+        .audio-card-title  { font-size: 12px; font-weight: 600; color: var(--text); text-transform: capitalize; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        audio { width: 100%; height: 32px; border-radius: 6px; outline: none; }
+
+        /* Paper cards */
+        .paper-card {
+            display: block;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px;
+            text-decoration: none;
+            transition: border-color 0.15s, transform 0.15s;
+        }
+        .paper-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+        .paper-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px; }
+        .paper-card-title  { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.5; display: -webkit-box; -webkit-box-orient: vertical; line-clamp: 2; -webkit-line-clamp: 2; overflow: hidden; }
+        .paper-card-author { font-size: 11px; color: var(--text3); font-style: italic; }
+        .paper-card-year   { font-size: 11px; font-family: var(--font-mono); color: var(--text3); flex-shrink: 0; }
+        .papers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        @media (max-width: 600px) { .papers-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
-<body class="tool-body bg-slate-950 text-white min-h-screen flex flex-col relative overflow-x-hidden font-sans" onclick="closeSuggestions()">
+<body>
 
-    <div class="absolute inset-0 z-0 opacity-10 pointer-events-none" 
-         style="background-image: linear-gradient(#4f46e5 1px, transparent 1px), linear-gradient(90deg, #4f46e5 1px, transparent 1px); background-size: 40px 40px;">
-    </div>
-
-    <nav class="p-5 border-b border-slate-800 bg-slate-950/90 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <a href="../index.html" class="text-slate-400 hover:text-emerald-400 transition flex items-center gap-2 font-bold tracking-widest text-sm uppercase">
-                <span>←</span> Nexus Hub
-            </a>
-            <h1 class="text-xl font-bold tracking-tight">BIO-NEXUS <span class="text-indigo-400">INTELLIGENCE</span> 🧠</h1>
-        </div>
+    <!-- Topbar -->
+    <nav class="nt-topbar">
+        <a href="../index.html" class="nt-brand">
+            <span class="nt-brand-dot"></span>Bio-Nexus
+        </a>
+        <span class="nt-tool-name">Species Explorer</span>
+        <a href="../index.html" class="nt-hub-link">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Hub
+        </a>
     </nav>
 
-    <main class="flex-grow container mx-auto px-4 sm:px-6 py-12 z-10 relative">
-        
-        <div class="max-w-3xl mx-auto text-center mb-12 relative z-50 animate-fade-up">
-            <h2 class="text-4xl md:text-5xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-indigo-500">
-                Explore The Biosphere
-            </h2>
-            <p class="text-slate-400 mb-8 text-sm md:text-base">Powered by EoL, NCBI, OpenAlex, GBIF & Wikipedia APIs</p>
-            
-            <div class="relative">
-                <input type="hidden" id="selectedScientificName">
-                
-                <div class="flex flex-col md:flex-row gap-3">
-                    <input type="text" id="speciesInput" 
-                        oninput="handleInput()" 
-                        placeholder="Type an organism, disease, or biological concept..." 
-                        autocomplete="off"
-                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-6 py-4 text-lg text-white focus:ring-2 focus:ring-indigo-500 outline-none placeholder-slate-500 transition-all shadow-inner">
-                    <button onclick="router()" 
-                        class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-10 py-4 rounded-xl transition-all shadow-lg shadow-indigo-500/30 w-full md:w-auto flex-shrink-0">
-                        Scan 🧬
+    <div class="nt-page" onclick="closeSuggestions()">
+        <main class="nt-main nt-main--wide" style="max-width:860px">
+
+            <div class="nt-page-header">
+                <h1 class="nt-page-title">Species Explorer</h1>
+                <p class="nt-page-desc">Search any species, disease, or biological concept. Powered by GBIF, iNaturalist, Wikipedia, OpenAlex &amp; PubMed.</p>
+            </div>
+
+            <!-- Search -->
+            <div class="nt-card">
+                <div style="display:flex;gap:10px">
+                    <div class="nt-search-wrap" style="flex:1">
+                        <input type="hidden" id="selectedScientificName">
+                        <svg class="nt-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+                        <input type="text" id="speciesInput"
+                            class="nt-input" style="padding-left:38px"
+                            oninput="handleInput()"
+                            placeholder="Type an organism, disease, or biological concept..."
+                            autocomplete="off">
+                        <div id="suggestions" class="hidden"></div>
+                    </div>
+                    <button onclick="router()" class="nt-btn nt-btn--primary" style="flex-shrink:0">
+                        Search
                     </button>
                 </div>
-                <div id="suggestions" class="hidden absolute top-full left-0 w-full md:w-[calc(100%-140px)] bg-slate-800 border border-slate-700 rounded-xl mt-2 shadow-2xl max-h-60 overflow-y-auto z-50 text-left custom-scrollbar"></div>
             </div>
-        </div>
 
-        <div id="loader" class="hidden flex flex-col items-center justify-center my-20">
-            <div class="relative w-16 h-16">
-                <div class="absolute inset-0 border-4 border-slate-700 rounded-full"></div>
-                <div class="absolute inset-0 border-4 border-indigo-500 rounded-full border-t-transparent animate-spin"></div>
+            <!-- Loader -->
+            <div id="loader">
+                <div class="loader-ring"></div>
+                <p style="font-size:11px;color:var(--text3);margin-top:12px;letter-spacing:0.06em;text-transform:uppercase">Querying global databases...</p>
             </div>
-            <p class="text-indigo-400 text-sm font-bold mt-4 tracking-widest uppercase animate-pulse">Querying Global Databases...</p>
-        </div>
 
-        <div id="speciesDashboard" class="hidden space-y-8 animate-fade-up">
-            <div class="glass-card rounded-2xl p-6 md:p-8">
-                <div class="flex flex-col md:flex-row gap-8 items-start">
-                    <div class="shrink-0 w-full md:w-48">
-                        <img id="wikiImg" src="" class="w-full h-48 md:h-48 rounded-xl object-cover border border-slate-600 shadow-xl hidden">
-                        <div id="wikiImgPlaceholder" class="w-full h-48 md:h-48 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-5xl shadow-inner">🦠</div>
-                    </div>
-                    
-                    <div class="flex-grow w-full">
-                        <h2 id="speciesTitle" class="text-4xl font-bold text-white capitalize mb-1">Common Name</h2>
-                        <p id="scientificSubtitle" class="text-emerald-400 italic font-mono text-lg mb-4"></p>
-                        
-                        <div class="flex flex-wrap gap-2 mb-6 font-mono text-xs text-slate-300 bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
-                            <span class="text-slate-500">Taxonomy:</span> <span id="taxString" class="text-indigo-300">Fetching classification...</span>
-                        </div>
-
-                        <div class="space-y-4">
-                            <div class="border-l-2 border-yellow-500 pl-4">
-                                <p class="text-[10px] text-yellow-500 uppercase font-bold tracking-widest mb-1">Wikipedia Summary</p>
-                                <p id="speciesDesc" class="text-slate-300 leading-relaxed text-sm">Extracting data...</p>
+            <!-- ── Species Dashboard ── -->
+            <div id="speciesDashboard" class="hidden nt-anim">
+                <div class="nt-gap-lg"></div>
+                <div class="nt-card">
+                    <div class="result-hero">
+                        <img id="wikiImg" src="" class="result-img hidden">
+                        <div id="wikiImgPlaceholder" class="result-img-placeholder">🦠</div>
+                        <div style="flex:1;min-width:0">
+                            <h2 id="speciesTitle" class="result-title">—</h2>
+                            <p id="scientificSubtitle" class="result-subtitle"></p>
+                            <div class="taxonomy-bar">
+                                <span style="color:var(--text3);margin-right:4px">Taxonomy:</span>
+                                <span id="taxString" style="color:var(--text2)">Loading...</span>
                             </div>
+                            <p id="speciesDesc" class="wiki-desc">Fetching summary...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lineage -->
+                <div id="taxaCard" class="nt-card hidden" style="margin-top:12px">
+                    <p class="nt-card-title">Evolutionary Lineage</p>
+                    <div id="taxaTree" style="display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:12px"></div>
+                </div>
+
+                <!-- Media grid -->
+                <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px" id="mediaGrid">
+                    <div id="galleryCard" class="nt-card">
+                        <p class="nt-card-title" style="margin-bottom:12px">
+                            Visual Records
+                            <span class="nt-badge" style="margin-left:8px;font-size:9px">GBIF · iNat · Wiki</span>
+                        </p>
+                        <div id="imageContainer" class="img-grid"></div>
+                    </div>
+
+                    <div id="audioCard" class="nt-card hidden">
+                        <p class="nt-card-title" style="margin-bottom:12px">
+                            Bioacoustics
+                            <span class="nt-badge" style="margin-left:8px;font-size:9px">Xeno-canto · iNat</span>
+                        </p>
+                        <div id="audioContainer"></div>
+                        <div id="audioFallback" class="hidden" style="text-align:center;padding:16px 0">
+                            <p style="font-size:12px;color:var(--text3);margin-bottom:8px">No verified audio records found.</p>
+                            <a id="ytLink" href="#" target="_blank" class="nt-btn nt-btn--ghost" style="font-size:12px">Search on YouTube</a>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="taxaCard" class="glass-card rounded-2xl p-6 mb-8 hidden">
-                <h3 class="text-lg font-bold text-indigo-400 mb-4 border-b border-slate-700 pb-2 flex items-center gap-2">
-                    <span>🧬 Evolutionary Lineage (Taxa)</span>
-                </h3>
-                <div id="taxaTree" class="flex flex-wrap items-center gap-2 text-sm"></div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8" id="mediaGrid">
-                <div id="galleryCard" class="glass-card rounded-2xl p-6 h-[450px] flex flex-col">
-                    <h3 class="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-700 pb-2 flex justify-between items-center">
-                        <span>📸 Visual Database</span>
-                        <span class="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400">GBIF / iNat / Wiki</span>
-                    </h3>
-                    <div id="imageContainer" class="grid grid-cols-2 gap-3 overflow-y-auto pr-2 custom-scrollbar flex-grow content-start"></div>
-                </div>
-
-                <div id="audioCard" class="glass-card rounded-2xl p-6 h-[450px] flex flex-col hidden">
-                    <h3 class="text-lg font-bold text-orange-400 mb-4 border-b border-slate-700 pb-2 flex justify-between items-center">
-                        <span>🔊 Bio-Acoustics</span>
-                        <span class="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400">Xeno-Canto / iNat</span>
-                    </h3>
-                    <div id="audioContainer" class="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-grow"></div>
-                    <div id="audioFallback" class="hidden mt-auto pt-4 text-center">
-                        <p class="text-xs text-slate-500 mb-2">No verified audio records found.</p>
-                        <a id="ytLink" href="#" target="_blank" class="inline-block bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 text-xs px-4 py-2 rounded transition">Search on YouTube ▶️</a>
+            <!-- ── Topic Dashboard ── -->
+            <div id="topicDashboard" class="hidden nt-anim">
+                <div class="nt-gap-lg"></div>
+                <div class="nt-card">
+                    <span class="nt-badge nt-badge--accent" style="margin-bottom:10px;display:inline-flex">Biological Concept</span>
+                    <h2 id="topicTitle" class="result-title" style="margin-bottom:16px">—</h2>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+                        <div>
+                            <p class="nt-card-title">Wikipedia Definition</p>
+                            <p id="topicDesc" style="font-size:13px;color:var(--text2);line-height:1.7">Loading...</p>
+                        </div>
+                        <div style="border-left:1px solid var(--border);padding-left:20px">
+                            <p class="nt-card-title">Clinical Context (Europe PMC)</p>
+                            <p id="medDesc" style="font-size:13px;color:var(--text2);line-height:1.7;font-style:italic">Fetching...</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div id="topicDashboard" class="hidden space-y-8 animate-fade-up">
-            <div class="glass-card rounded-2xl p-8 relative overflow-hidden">
-                <div class="absolute -top-10 -right-10 text-9xl opacity-5">🧬</div>
-                <h2 id="topicTitle" class="text-4xl font-bold text-white mb-2 capitalize relative z-10">Topic Name</h2>
-                <span class="bg-indigo-900/50 text-indigo-300 border border-indigo-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-6 inline-block">Biological Concept</span>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-                    <div>
-                        <h4 class="text-yellow-500 font-bold text-sm mb-2 uppercase tracking-widest border-b border-slate-700 pb-1">Wiki Definition</h4>
-                        <p id="topicDesc" class="text-slate-300 leading-relaxed text-sm">Loading definition...</p>
-                    </div>
-                    <div class="md:border-l border-slate-700 md:pl-8">
-                        <h4 class="text-blue-400 font-bold text-sm mb-2 uppercase tracking-widest border-b border-slate-700 pb-1">Medical Context (Europe PMC)</h4>
-                        <p id="medDesc" class="text-slate-300 leading-relaxed text-sm italic">Fetching clinical summary...</p>
-                    </div>
+            <!-- Research Literature -->
+            <div id="researchSection" class="nt-card hidden nt-anim" style="margin-top:12px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <p class="nt-card-title" style="margin:0">Research Literature</p>
+                    <span class="nt-badge" style="font-size:9px">OpenAlex · PubMed</span>
                 </div>
+                <div id="researchContainer" class="papers-grid"></div>
+                <div id="noPapersMsg" class="hidden" style="text-align:center;padding:24px;font-size:13px;color:var(--text3)">No open-access papers found for this query.</div>
             </div>
-        </div>
 
-        <div id="researchSection" class="hidden glass-card rounded-2xl p-6 mt-8 animate-fade-up">
-            <div class="flex items-center justify-between mb-6 border-b border-slate-700 pb-4">
-                <h3 class="text-xl font-bold text-indigo-400 flex items-center gap-2">
-                    📚 Global Research Literature
-                </h3>
-                <span class="text-xs text-slate-400 bg-slate-900 border border-slate-700 px-3 py-1 rounded-full">OpenAlex + PubMed</span>
-            </div>
-            
-            <div id="researchContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                </div>
-            <div id="noPapersMsg" class="hidden text-center text-slate-500 py-8">No open-access papers found for this query.</div>
-        </div>
-
-    </main>
+        </main>
+    </div>
 
     <script>
         // ==========================================
-        // 🚦 1. THE CORE ROUTER (STRICT MATCHING FIX 🛡️)
+        // 🚦 1. THE CORE ROUTER (STRICT MATCHING FIX)
         // ==========================================
         async function router() {
             let inputVal = document.getElementById('speciesInput').value.trim();
             let preSelectedName = document.getElementById('selectedScientificName').value;
-
-            if(!inputVal) return;
+            if (!inputVal) return;
             closeSuggestions();
 
             // Reset UI
             document.getElementById('speciesDashboard').classList.add('hidden');
             document.getElementById('topicDashboard').classList.add('hidden');
             document.getElementById('researchSection').classList.add('hidden');
-            document.getElementById('loader').classList.remove('hidden');
+            document.getElementById('loader').style.display = 'flex';
 
             let isSpecies = false;
             let queryName = inputVal;
-            let queryKey = null;
-
-            // SMART RESOLVER 2.0: Strict Matching to prevent "Cough" -> "Coughbush"
+            let queryKey  = null;
             let searchName = preSelectedName;
-            
+
             try {
-                // If user didn't select from dropdown, strictly verify it's a species
                 if (!preSelectedName) {
-                    const inatRes = await fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(inputVal)}`);
+                    const inatRes  = await fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(inputVal)}`);
                     const inatData = await inatRes.json();
-                    
                     if (inatData.results && inatData.results.length > 0) {
-                        const bestMatch = inatData.results[0];
+                        const best = inatData.results[0];
                         const inputLower = inputVal.toLowerCase();
-                        
-                        // Check for EXACT match
-                        const sciMatch = bestMatch.name.toLowerCase() === inputLower;
-                        const comMatch = bestMatch.preferred_common_name && bestMatch.preferred_common_name.toLowerCase() === inputLower;
-                        
-                        // ONLY proceed as species if it's an EXACT match
-                        if ((sciMatch || comMatch) && bestMatch.rank !== 'kingdom') {
-                            searchName = bestMatch.name; 
-                        }
+                        const sciMatch = best.name.toLowerCase() === inputLower;
+                        const comMatch = best.preferred_common_name && best.preferred_common_name.toLowerCase() === inputLower;
+                        if ((sciMatch || comMatch) && best.rank !== 'kingdom') searchName = best.name;
                     }
                 }
-
-                // If we confidently have a species name, fetch its GBIF Key
                 if (searchName) {
-                    const matchRes = await fetch(`https://api.gbif.org/v1/species/match?name=${encodeURIComponent(searchName)}`);
+                    const matchRes  = await fetch(`https://api.gbif.org/v1/species/match?name=${encodeURIComponent(searchName)}`);
                     const matchData = await matchRes.json();
                     if (matchData.usageKey && matchData.confidence > 70 && matchData.rank !== 'KINGDOM') {
                         isSpecies = true;
-                        queryKey = matchData.usageKey;
+                        queryKey  = matchData.usageKey;
                         queryName = matchData.canonicalName || matchData.scientificName;
                     }
                 }
             } catch(e) { console.warn("Resolution Failed"); }
 
-            document.getElementById('loader').classList.add('hidden');
-            
-            if (isSpecies) { 
+            document.getElementById('loader').style.display = 'none';
+
+            if (isSpecies) {
                 document.getElementById('speciesDashboard').classList.remove('hidden');
                 fetchWiki(queryName, inputVal);
-                fetchUnifiedGalleryAndAudio(queryName, queryKey, inputVal); 
-            } else { 
-                // IT'S A TOPIC/DISEASE - Route to Concept Dashboard! 🧬
+                fetchUnifiedGalleryAndAudio(queryName, queryKey, inputVal);
+            } else {
                 document.getElementById('topicDashboard').classList.remove('hidden');
                 fetchTopicData(inputVal);
             }
@@ -253,26 +387,25 @@
             document.getElementById('researchSection').classList.remove('hidden');
             searchLiteratureUnified(queryName || inputVal);
         }
-        
+
         // ==========================================
-        // 🧬 2. SPECIES MODE LOGIC
+        // 🧬 2. SPECIES MODE
         // ==========================================
         async function fetchWiki(sciName, commonInput) {
-            const displayTitle = (commonInput.length > 0 && commonInput.toLowerCase() !== sciName.toLowerCase()) ? commonInput : sciName;
+            const displayTitle = (commonInput.toLowerCase() !== sciName.toLowerCase()) ? commonInput : sciName;
             document.getElementById('speciesTitle').innerText = displayTitle;
             document.getElementById('scientificSubtitle').innerText = sciName;
-            
             try {
-                const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(sciName)}`);
+                const res  = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(sciName)}`);
                 const data = await res.json();
-                if(data.title) {
+                if (data.title) {
                     document.getElementById('speciesDesc').innerText = data.extract;
-                    if(data.thumbnail) {
+                    if (data.thumbnail) {
                         document.getElementById('wikiImg').src = data.thumbnail.source;
                         document.getElementById('wikiImg').classList.remove('hidden');
                         document.getElementById('wikiImgPlaceholder').classList.add('hidden');
                     }
-                } else { document.getElementById('speciesDesc').innerText = "Detailed summary not found on Wikipedia."; }
+                } else { document.getElementById('speciesDesc').innerText = "Summary not found on Wikipedia."; }
             } catch(e) { document.getElementById('speciesDesc').innerText = "Error fetching summary."; }
         }
 
@@ -282,80 +415,62 @@
             let isAnimal = false;
 
             try {
-                let gbifUrl = key ? `https://api.gbif.org/v1/occurrence/search?mediaType=StillImage&taxonKey=${key}&limit=5` : `https://api.gbif.org/v1/occurrence/search?mediaType=StillImage&scientificName=${encodeURIComponent(sciName)}&limit=5`;
-                const gbifRes = await fetch(gbifUrl);
+                let gbifUrl = key
+                    ? `https://api.gbif.org/v1/occurrence/search?mediaType=StillImage&taxonKey=${key}&limit=5`
+                    : `https://api.gbif.org/v1/occurrence/search?mediaType=StillImage&scientificName=${encodeURIComponent(sciName)}&limit=5`;
+                const gbifRes  = await fetch(gbifUrl);
                 const gbifData = await gbifRes.json();
-                
-                if(gbifData.results.length > 0) {
+                if (gbifData.results.length > 0) {
                     const tax = gbifData.results[0];
-                    document.getElementById('taxString').innerText = `${tax.kingdom || 'Unknown'} › ${tax.phylum || 'Unknown'} › ${tax.class || 'Unknown'}`;
-                    if((tax.kingdom || '').toLowerCase() === 'animalia') isAnimal = true;
-                    
+                    document.getElementById('taxString').innerText = `${tax.kingdom||'?'} › ${tax.phylum||'?'} › ${tax.class||'?'}`;
+                    if ((tax.kingdom||'').toLowerCase() === 'animalia') isAnimal = true;
                     gbifData.results.forEach(r => {
                         let media = r.media?.[0];
-                        if(media?.identifier) renderImageCard(media.identifier.replace('http:', 'https:'), "GBIF", "bg-indigo-600");
+                        if (media?.identifier) renderImageCard(media.identifier.replace('http:','https:'), "GBIF");
                     });
                 }
             } catch(e) {}
 
-            // Fetch taxonomic hierarchy from iNaturalist
+            // Taxonomic lineage from iNaturalist
             try {
-                const taxaRes = await fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(sciName)}&is_active=true&per_page=1`);
+                const taxaRes  = await fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(sciName)}&is_active=true&per_page=1`);
                 const taxaData = await taxaRes.json();
-                
                 if (taxaData.results && taxaData.results.length > 0) {
-                    const taxon = taxaData.results[0];
-                    const ancestors = taxon.ancestors || [];
-                    const fullLineage = [...ancestors, taxon].filter(t => t.name !== 'Life');
-                    
-                    const taxaTree = document.getElementById('taxaTree');
-                    taxaTree.innerHTML = '';
-                    
-                    fullLineage.forEach((item, index) => {
-                        const taxonSpan = document.createElement('span');
-                        taxonSpan.className = "group relative cursor-help flex items-center transition-colors hover:text-emerald-400";
-                        
-                        const rankColor = getRankClass(item.rank);
-                        let commonNameStr = item.preferred_common_name ? `<br/><span class='text-xs text-slate-300 capitalize'>${item.preferred_common_name}</span>` : '';
-
-                        taxonSpan.innerHTML = `
-                            <span class="${rankColor} border-b border-dashed border-slate-600 group-hover:border-emerald-400">${item.name}</span>
-                            ${index < fullLineage.length - 1 ? '<span class="mx-2 text-slate-600 text-xs opacity-50">▶</span>' : ''}
-                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-max max-w-[200px] bg-slate-800 text-white text-[11px] uppercase tracking-wider font-bold py-1 px-3 rounded shadow-lg border border-slate-600 z-50 text-center">
-                                ${item.rank} ${commonNameStr}
-                            </div>
+                    const taxon    = taxaData.results[0];
+                    const lineage  = [...(taxon.ancestors||[]), taxon].filter(t => t.name !== 'Life');
+                    const treeDiv  = document.getElementById('taxaTree');
+                    treeDiv.innerHTML = '';
+                    lineage.forEach((item, index) => {
+                        let span = document.createElement('span');
+                        span.className = 'taxa-item';
+                        let rankColor = getRankClass(item.rank);
+                        let commonStr = item.preferred_common_name ? `<br><span style="font-size:10px;color:var(--text2);text-transform:capitalize">${item.preferred_common_name}</span>` : '';
+                        span.innerHTML = `
+                            <span style="${rankColor};border-bottom:1px dashed var(--border2)">${item.name}</span>
+                            ${index < lineage.length - 1 ? '<span class="taxa-sep">▶</span>' : ''}
+                            <span class="taxa-tooltip">${item.rank}${commonStr}</span>
                         `;
-                        taxaTree.appendChild(taxonSpan);
+                        treeDiv.appendChild(span);
                     });
-                    
                     document.getElementById('taxaCard').classList.remove('hidden');
-                } else {
-                    document.getElementById('taxaCard').classList.add('hidden');
-                }
-            } catch(e) {
-                document.getElementById('taxaCard').classList.add('hidden');
-            }
+                } else { document.getElementById('taxaCard').classList.add('hidden'); }
+            } catch(e) { document.getElementById('taxaCard').classList.add('hidden'); }
 
+            // Audio
             const audioCard = document.getElementById('audioCard');
-            const galleryCard = document.getElementById('galleryCard');
             if (isAnimal) {
                 audioCard.classList.remove('hidden');
-                galleryCard.classList.remove('lg:col-span-2'); galleryCard.classList.add('lg:col-span-1');
-                imgCont.classList.remove('grid-cols-4'); imgCont.classList.add('grid-cols-2');
                 fetchAudioData(sciName, commonInput);
             } else {
                 audioCard.classList.add('hidden');
-                galleryCard.classList.remove('lg:col-span-1'); galleryCard.classList.add('lg:col-span-2');
-                imgCont.classList.remove('grid-cols-2'); imgCont.classList.add('grid-cols-4');
             }
 
-            fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(sciName)}`).then(res => res.json()).then(data => {
+            // iNat photos
+            fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(sciName)}`).then(r=>r.json()).then(data=>{
                 if (data.results.length > 0 && data.results[0].taxon_photos) {
-                    data.results[0].taxon_photos.slice(0, 4).forEach(photo => {
-                        renderImageCard(photo.photo.medium_url, "iNaturalist", "bg-emerald-600");
-                    });
+                    data.results[0].taxon_photos.slice(0,4).forEach(photo => renderImageCard(photo.photo.medium_url, "iNat"));
                 }
-            }).catch(e=>{});
+            }).catch(()=>{});
         }
 
         async function fetchAudioData(sciName, commonName) {
@@ -363,208 +478,210 @@
             audCont.innerHTML = '';
             document.getElementById('audioFallback').classList.add('hidden');
             document.getElementById('ytLink').href = `https://www.youtube.com/results?search_query=${encodeURIComponent(commonName)}+animal+sound`;
-            
             let audioCount = 0;
 
             try {
-                const xcUrl = `https://corsproxy.io/?` + encodeURIComponent(`https://www.xeno-canto.org/api/2/recordings?query=${sciName}`);
-                const xcRes = await fetch(xcUrl);
+                const xcUrl  = `https://corsproxy.io/?` + encodeURIComponent(`https://www.xeno-canto.org/api/2/recordings?query=${sciName}`);
+                const xcRes  = await fetch(xcUrl);
                 const xcData = await xcRes.json();
-                if(xcData.recordings && xcData.recordings.length > 0) {
+                if (xcData.recordings && xcData.recordings.length > 0) {
                     xcData.recordings.slice(0, 3).forEach(rec => {
-                        renderAudioCard(rec.en || sciName, "Xeno-canto", rec.file, "bg-orange-500");
+                        renderAudioCard(rec.en || sciName, "Xeno-canto", rec.file);
                         audioCount++;
                     });
                 }
             } catch(e) {}
 
-            // The Audio Fallback (Puli, Singam thedum podhu iNat-la irundhu audio varum!)
-            if(audioCount === 0) {
+            if (audioCount === 0) {
                 try {
-                    const iNatUrl = `https://api.inaturalist.org/v1/observations?taxon_name=${encodeURIComponent(sciName)}&has[]=sounds&per_page=3`;
-                    const iNatRes = await fetch(iNatUrl);
+                    const iNatUrl  = `https://api.inaturalist.org/v1/observations?taxon_name=${encodeURIComponent(sciName)}&has[]=sounds&per_page=3`;
+                    const iNatRes  = await fetch(iNatUrl);
                     const iNatData = await iNatRes.json();
                     iNatData.results.forEach(obs => {
-                        if (obs.sounds && obs.sounds.length > 0 && obs.sounds[0].file_url) {
-                            renderAudioCard("Observation", "iNat", obs.sounds[0].file_url, "bg-emerald-600");
+                        if (obs.sounds?.[0]?.file_url) {
+                            renderAudioCard("Observation", "iNat", obs.sounds[0].file_url);
                             audioCount++;
                         }
                     });
-                } catch(e){}
+                } catch(e) {}
             }
-
-            if(audioCount === 0) document.getElementById('audioFallback').classList.remove('hidden');
+            if (audioCount === 0) document.getElementById('audioFallback').classList.remove('hidden');
         }
 
         // ==========================================
-        // 🔬 3. TOPIC MODE LOGIC
+        // 🔬 3. TOPIC MODE
         // ==========================================
         async function fetchTopicData(topic) {
             document.getElementById('topicTitle').innerText = topic;
-            
             fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic)}`)
-            .then(res => res.json()).then(data => {
-                document.getElementById('topicDesc').innerText = data.extract || "Definition not found.";
-            }).catch(e => document.getElementById('topicDesc').innerText = "Error fetching Wiki.");
-
+                .then(r=>r.json()).then(d => { document.getElementById('topicDesc').innerText = d.extract || "Definition not found."; })
+                .catch(() => { document.getElementById('topicDesc').innerText = "Error fetching."; });
             fetch(`https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${encodeURIComponent(topic)} review&resultType=core&format=json&pageSize=1`)
-            .then(res => res.json()).then(data => {
-                if(data.resultList?.result?.length > 0) {
-                    const abstract = data.resultList.result[0].abstractText || "";
-                    document.getElementById('medDesc').innerText = abstract ? abstract.replace(/<[^>]*>?/gm, '').substring(0, 300) + "..." : "No clinical abstract available.";
-                } else { document.getElementById('medDesc').innerText = "No specific clinical reviews found."; }
-            }).catch(e => document.getElementById('medDesc').innerText = "Connection error.");
+                .then(r=>r.json()).then(d => {
+                    if (d.resultList?.result?.length > 0) {
+                        const abs = d.resultList.result[0].abstractText || "";
+                        document.getElementById('medDesc').innerText = abs ? abs.replace(/<[^>]*>?/gm,'').substring(0,300)+"..." : "No clinical abstract available.";
+                    } else { document.getElementById('medDesc').innerText = "No specific reviews found."; }
+                }).catch(() => { document.getElementById('medDesc').innerText = "Connection error."; });
         }
 
         // ==========================================
-        // 📚 4. THE ULTIMATE LITERATURE ENGINE (OPENALEX FIXED 🚀)
+        // 📚 4. LITERATURE
         // ==========================================
         async function searchLiteratureUnified(query) {
             const container = document.getElementById('researchContainer');
             container.innerHTML = '';
             document.getElementById('noPapersMsg').classList.add('hidden');
             let papersFound = 0;
-
             const safeQuery = encodeURIComponent(query);
 
-            const pmcPromise = fetch(`https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${safeQuery}&format=json&pageSize=15`).then(r => r.json());
-            
-            // Fix: Changed 'default_search' to 'search' and filter to 'is_oa:true'
-            const alexPromise = fetch(`https://api.openalex.org/works?search=${safeQuery}&per-page=15&filter=is_oa:true`).then(r => r.json());
+            const pmcPromise  = fetch(`https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${safeQuery}&format=json&pageSize=10`).then(r=>r.json());
+            const alexPromise = fetch(`https://api.openalex.org/works?search=${safeQuery}&per-page=10&filter=is_oa:true`).then(r=>r.json());
 
             Promise.allSettled([pmcPromise, alexPromise]).then(results => {
-                // PubMed Results
                 if (results[0].status === 'fulfilled' && results[0].value.resultList?.result) {
                     results[0].value.resultList.result.forEach(paper => {
-                        renderPaperCard(paper.title, paper.authorString || 'Various', paper.pubYear, `https://europepmc.org/article/${paper.source}/${paper.id}`, "PubMed", "bg-blue-900 text-blue-300 border-blue-700");
+                        renderPaperCard(paper.title, paper.authorString || 'Various', paper.pubYear,
+                            `https://europepmc.org/article/${paper.source}/${paper.id}`, "PubMed");
                         papersFound++;
                     });
                 }
-                
-                // OpenAlex Results
                 if (results[1].status === 'fulfilled' && results[1].value.results) {
                     results[1].value.results.forEach(paper => {
                         let author = paper.authorships?.[0]?.author?.display_name || "Various";
-                        let url = paper.open_access?.oa_url || paper.doi || paper.id;
-                        if(url) {
-                            renderPaperCard(paper.title, author, paper.publication_year, url, "OpenAlex", "bg-emerald-900 text-emerald-300 border-emerald-700");
-                            papersFound++;
-                        }
+                        let url    = paper.open_access?.oa_url || paper.doi || paper.id;
+                        if (url) { renderPaperCard(paper.title, author, paper.publication_year, url, "OpenAlex"); papersFound++; }
                     });
                 }
-
-                if(papersFound === 0) document.getElementById('noPapersMsg').classList.remove('hidden');
+                if (papersFound === 0) document.getElementById('noPapersMsg').classList.remove('hidden');
             });
         }
 
         // ==========================================
-        // 🎨 5. UI HELPER FUNCTIONS
+        // 🎨 5. UI HELPERS
         // ==========================================
         function getRankClass(rank) {
-            const rankClasses = {
-                'kingdom': 'text-purple-400 font-bold',
-                'phylum': 'text-blue-400',
-                'class': 'text-cyan-400',
-                'order': 'text-green-400',
-                'family': 'text-yellow-400',
-                'genus': 'text-orange-400',
-                'species': 'text-emerald-400 italic'
+            const map = {
+                kingdom:'color:#c084fc;font-weight:700', phylum:'color:#93c5fd',
+                class:'color:#67e8f9', order:'color:#86efac',
+                family:'color:#fde047', genus:'color:#fb923c',
+                species:'color:#10B981;font-style:italic'
             };
-            return rankClasses[rank] || 'text-slate-300';
+            return map[rank] || 'color:var(--text2)';
         }
 
-        function renderImageCard(url, source, badgeClass) {
+        function renderImageCard(url, source) {
             const imgCont = document.getElementById('imageContainer');
             const div = document.createElement('div');
-            div.className = "relative group overflow-hidden rounded-xl h-32 border border-slate-700 bg-slate-900 shadow-md";
-            div.innerHTML = `
-                <img src="${url}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100">
-                <div class="absolute bottom-2 left-2 ${badgeClass} text-[9px] text-white px-2 py-0.5 rounded uppercase font-bold tracking-wider opacity-90">${source}</div>
-            `;
+            div.className = 'img-cell';
+            div.innerHTML = `<img src="${url}" loading="lazy"><div class="img-source">${source}</div>`;
             imgCont.appendChild(div);
         }
 
-        function renderAudioCard(title, source, url, badgeColor) {
+        function renderAudioCard(title, source, url) {
             const audCont = document.getElementById('audioContainer');
-            const audDiv = document.createElement('div');
-            audDiv.className = "bg-slate-900/80 p-4 rounded-xl border border-slate-700 shadow-inner";
-            audDiv.innerHTML = `
-                <div class="flex justify-between items-center mb-3">
-                    <span class="text-sm font-bold text-slate-200 truncate pr-2 capitalize">${title}</span>
-                    <span class="text-[9px] text-white px-2 py-1 rounded uppercase font-bold tracking-wider ${badgeColor}">${source}</span>
+            const div = document.createElement('div');
+            div.className = 'audio-card';
+            div.innerHTML = `
+                <div class="audio-card-header">
+                    <span class="audio-card-title">${title}</span>
+                    <span class="nt-badge" style="font-size:9px">${source}</span>
                 </div>
-                <audio controls class="w-full h-8 block rounded-lg outline-none" src="${url}"></audio>
+                <audio controls src="${url}"></audio>
             `;
-            audCont.appendChild(audDiv);
+            audCont.appendChild(div);
         }
 
-        function renderPaperCard(title, author, year, url, sourceName, badgeClass) {
+        function renderPaperCard(title, author, year, url, sourceName) {
             const container = document.getElementById('researchContainer');
-            container.innerHTML += `
-                <a href="${url}" target="_blank" class="block bg-slate-800/40 border border-slate-700 p-5 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:border-indigo-500 hover:shadow-lg hover:shadow-indigo-500/20 group">
-                    <div class="flex justify-between items-start mb-3">
-                        <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded border ${badgeClass}">${sourceName}</span>
-                        <span class="text-xs text-slate-400 font-mono">${year || ''}</span>
-                    </div>
-                    <h4 class="font-bold text-slate-200 mb-2 text-sm line-clamp-2 leading-relaxed group-hover:text-indigo-300 transition-colors">${title}</h4>
-                    <p class="text-xs text-slate-400 line-clamp-1 italic">✍️ ${author}</p>
-                </a>
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            a.className = 'paper-card';
+            a.innerHTML = `
+                <div class="paper-card-header">
+                    <span class="nt-badge nt-badge--accent" style="font-size:9px">${sourceName}</span>
+                    <span class="paper-card-year">${year||''}</span>
+                </div>
+                <div class="paper-card-title">${title||'Untitled'}</div>
+                <div class="paper-card-author" style="margin-top:6px">${author}</div>
             `;
+            container.appendChild(a);
         }
 
         // ==========================================
-        // 🔍 6. AUTOCOMPLETE (INATURALIST LOGIC 🧠)
+        // 🔍 6. AUTOCOMPLETE
         // ==========================================
         let debounceTimer;
         function handleInput() {
             const query = document.getElementById('speciesInput').value.trim();
-            const box = document.getElementById('suggestions');
-            
+            const box   = document.getElementById('suggestions');
             document.getElementById('selectedScientificName').value = "";
-
             if (query.length < 3) { box.classList.add('hidden'); return; }
             clearTimeout(debounceTimer);
-            
             debounceTimer = setTimeout(async () => {
                 try {
-                    // Use iNaturalist for accurate autocomplete suggestions
-                    const res = await fetch(`https://api.inaturalist.org/v1/taxa/autocomplete?q=${encodeURIComponent(query)}&limit=5`);
+                    const res  = await fetch(`https://api.inaturalist.org/v1/taxa/autocomplete?q=${encodeURIComponent(query)}&limit=6`);
                     const data = await res.json();
                     box.innerHTML = '';
-                    if(data.results && data.results.length > 0) {
+                    if (data.results && data.results.length > 0) {
                         box.classList.remove('hidden');
                         data.results.forEach(item => {
                             const div = document.createElement('div');
-                            div.className = "suggestion-item p-4 border-b border-slate-700 text-slate-300 flex justify-between items-center transition-colors";
-                            
-                            let commonName = item.preferred_common_name ? item.preferred_common_name + " " : "";
-                            let sciName = item.name;
-                            
-                            div.innerHTML = `<span class="font-medium capitalize">${commonName}<i class="text-slate-400 text-sm ml-1">(${sciName})</i></span> <span class="text-[10px] bg-slate-900 border border-slate-600 px-2 py-1 rounded uppercase tracking-wider">${item.rank}</span>`;
-                            
+                            div.className = 'suggestion-item';
+                            let common = item.preferred_common_name ? `${item.preferred_common_name} ` : '';
+                            div.innerHTML = `<span style="color:var(--text)">${common}<em style="color:var(--text3);font-size:12px">${item.name}</em></span><span class="suggestion-item-rank">${item.rank}</span>`;
                             div.onclick = () => {
-                                document.getElementById('speciesInput').value = sciName; 
-                                document.getElementById('selectedScientificName').value = sciName;
+                                document.getElementById('speciesInput').value = item.name;
+                                document.getElementById('selectedScientificName').value = item.name;
                                 box.classList.add('hidden');
                                 router();
                             };
                             box.appendChild(div);
                         });
                     } else { box.classList.add('hidden'); }
-                } catch(e){}
+                } catch(e) {}
             }, 300);
         }
 
-        function closeSuggestions() {
-            document.getElementById('suggestions').classList.add('hidden');
-        }
+        function closeSuggestions() { document.getElementById('suggestions').classList.add('hidden'); }
 
-        // Add Enter key functionality to search input
-        document.getElementById('speciesInput').addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                router();
-            }
+        document.getElementById('speciesInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') router();
         });
+
+        // Dr. Nexus Page Context Provider
+        window.nexusContext = function() {
+            const inputVal = document.getElementById('speciesInput')?.value.trim() || '';
+            const title = document.getElementById('speciesTitle')?.innerText || '';
+            const subtitle = document.getElementById('scientificSubtitle')?.innerText || '';
+            const tax = document.getElementById('taxString')?.innerText || '';
+            const isSpeciesView = !document.getElementById('speciesDashboard')?.classList.contains('hidden');
+            const isTopicView = !document.getElementById('topicDashboard')?.classList.contains('hidden');
+
+            let activeName = isSpeciesView ? `${title} (${subtitle})` : (isTopicView ? document.getElementById('topicTitle')?.innerText : inputVal);
+
+            return {
+                tool: "Species Explorer",
+                icon: "🌿",
+                accent: "#10B981",
+                active: Boolean(activeName),
+                summary: activeName ? `Viewing: ${activeName}` : "Search species or biological concept",
+                quickPrompts: [
+                    "What is the ecological niche & trophic level of this species?",
+                    "Summarize its key physiological adaptations in the wild",
+                    "What are the latest scientific discoveries regarding this organism?"
+                ],
+                data: {
+                    activeSubject: activeName || null,
+                    taxonomyString: isSpeciesView && tax !== 'Loading...' ? tax : null,
+                    summaryExcerpt: isSpeciesView 
+                        ? document.getElementById('speciesDesc')?.innerText?.slice(0, 200)
+                        : (isTopicView ? document.getElementById('topicDesc')?.innerText?.slice(0, 200) : null)
+                }
+            };
+        };
     </script>
+    <script src="../js/nexus-widget.js"></script>
 </body>
 </html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gel Electrophoresis — Bio-Nexus</title>
+    <link rel="stylesheet" href="tool-shell.css">
+    <style>
+        :root { --tool-accent: #06B6D4; }
+
+        /* Gel tank */
+        .gel-wrap {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .gel-tank {
+            flex: 1;
+            background: #020814;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            min-height: 420px;
+        }
+
+        .gel-tank-label {
+            position: absolute;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            font-family: var(--font-mono);
+            opacity: 0.4;
+        }
+        .gel-tank-label--top  { top: 8px;  left: 50%; transform: translateX(-50%); color: #64748b; }
+        .gel-tank-label--bot  { bottom: 8px; left: 50%; transform: translateX(-50%); color: #ef4444; }
+
+        #gelLanes {
+            display: flex;
+            gap: 6px;
+            padding: 32px 16px 32px;
+            min-height: 100%;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .gel-lane {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            height: 380px;
+            min-width: 64px;
+            border-right: 1px solid rgba(255,255,255,0.04);
+        }
+        .gel-lane:last-child { border-right: none; }
+
+        .gel-lane-label {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text3);
+            margin-bottom: 8px;
+            height: 12px;
+            text-align: center;
+        }
+
+        .gel-well {
+            width: 36px;
+            height: 10px;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-bottom: none;
+            border-radius: 2px 2px 0 0;
+            background: rgba(255,255,255,0.03);
+            margin-bottom: 4px;
+            z-index: 2;
+        }
+
+        .dna-band {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 72%;
+            height: 3px;
+            border-radius: 2px;
+            cursor: crosshair;
+            transition: top 3s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.4s ease;
+        }
+
+        /* UV flicker when running */
+        @keyframes uv-flicker {
+            0%, 100% { box-shadow: 0 0 12px currentColor; filter: brightness(1); }
+            50%       { box-shadow: 0 0 22px currentColor; filter: brightness(1.3); }
+        }
+        .uv-active .dna-band { animation: uv-flicker 2.2s infinite; }
+
+        /* Status pill */
+        .uv-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            background: var(--bg4);
+            border: 1px solid var(--border);
+            color: var(--text3);
+        }
+        .uv-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text3);
+            transition: background 0.4s, box-shadow 0.4s;
+        }
+        .uv-pill.active { color: var(--tool-accent); border-color: color-mix(in srgb, var(--tool-accent) 30%, transparent); }
+        .uv-pill.active .uv-dot { background: var(--tool-accent); box-shadow: 0 0 8px var(--tool-accent); }
+    </style>
+</head>
+<body>
+
+    <!-- Topbar -->
+    <nav class="nt-topbar">
+        <a href="../index.html" class="nt-brand">
+            <span class="nt-brand-dot"></span>Bio-Nexus
+        </a>
+        <span class="nt-tool-name">Virtual Gel Electrophoresis</span>
+        <a href="../index.html" class="nt-hub-link">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Hub
+        </a>
+    </nav>
+
+    <div class="nt-page">
+        <main class="nt-main nt-main--wide">
+            <div class="nt-page-header">
+                <h1 class="nt-page-title">Virtual Gel Electrophoresis</h1>
+                <p class="nt-page-desc">Simulate agarose gel migration. Enter fragment sizes in base pairs, load wells, then run.</p>
+            </div>
+
+            <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start">
+
+                <!-- Left: Controls -->
+                <div style="display:flex;flex-direction:column;gap:12px">
+                    <div class="nt-card">
+                        <p class="nt-card-title">DNA Samples (bp)</p>
+
+                        <label class="nt-label">Lane 1</label>
+                        <input type="text" id="lane1" class="nt-input nt-input--mono" value="4500, 2000, 800, 250" placeholder="500, 1200, 3000">
+                        <div class="nt-gap"></div>
+
+                        <label class="nt-label">Lane 2</label>
+                        <input type="text" id="lane2" class="nt-input nt-input--mono" value="6000, 1500" placeholder="1500, 800">
+                        <div class="nt-gap"></div>
+
+                        <label class="nt-label">Lane 3</label>
+                        <input type="text" id="lane3" class="nt-input nt-input--mono" value="8000, 3000, 1000, 500" placeholder="10000, 400">
+                        <div class="nt-gap-lg"></div>
+
+                        <button onclick="loadGel()" class="nt-btn nt-btn--ghost nt-btn--full">Load Wells</button>
+                        <div style="height:8px"></div>
+                        <button onclick="runGel()" id="runBtn" disabled class="nt-btn nt-btn--primary nt-btn--full">
+                            Run Gel
+                        </button>
+                    </div>
+
+                    <div class="nt-card">
+                        <p class="nt-card-title">How It Works</p>
+                        <p style="font-size:12px;color:var(--text2);line-height:1.7">
+                            DNA is negatively charged. Fragments migrate toward the positive anode. Smaller fragments travel further — migration follows a logarithmic curve.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Right: Gel Tank -->
+                <div class="nt-card" style="padding:16px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                        <p class="nt-card-title" style="margin:0">Agarose Gel (1.0%)</p>
+                        <span class="uv-pill" id="uvPill">
+                            <span class="uv-dot" id="uvDot"></span>
+                            <span id="uvLabel">UV Off</span>
+                        </span>
+                    </div>
+
+                    <div class="gel-tank" id="tankArea">
+                        <div class="gel-tank-label gel-tank-label--top">− Cathode</div>
+                        <div class="gel-tank-label gel-tank-label--bot">+ Anode</div>
+                        <div id="gelLanes">
+                            <p style="font-size:12px;color:var(--text3);margin:auto;align-self:center">Click "Load Wells" to prepare the gel.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const ladderFragments = [10000, 8000, 6000, 5000, 4000, 3000, 2000, 1500, 1000, 500, 250];
+        let isLoaded = false;
+
+        function loadGel() {
+            const container = document.getElementById('gelLanes');
+            container.innerHTML = '';
+
+            const l1 = document.getElementById('lane1').value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+            const l2 = document.getElementById('lane2').value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+            const l3 = document.getElementById('lane3').value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+
+            let html = createLane('Ladder', ladderFragments, '#94a3b8');
+            if (l1.length > 0) html += createLane('Lane 1', l1, '#06B6D4');
+            if (l2.length > 0) html += createLane('Lane 2', l2, '#a78bfa');
+            if (l3.length > 0) html += createLane('Lane 3', l3, '#34d399');
+
+            container.innerHTML = html;
+
+            isLoaded = true;
+            document.getElementById('tankArea').classList.remove('uv-active');
+            setUVStatus(false);
+
+            const runBtn = document.getElementById('runBtn');
+            runBtn.disabled = false;
+        }
+
+        function createLane(name, fragments, color) {
+            let laneHtml = `
+                <div class="gel-lane">
+                    <div class="gel-lane-label">${name}</div>
+                    <div class="gel-well"></div>
+            `;
+            let logMax = Math.log10(12000);
+            let logMin = Math.log10(100);
+
+            fragments.forEach(bp => {
+                let logBp   = Math.log10(Math.max(bp, 100));
+                let percent = ((logMax - logBp) / (logMax - logMin)) * 100;
+                percent = Math.min(Math.max(percent, 5), 93);
+
+                laneHtml += `
+                    <div class="dna-band"
+                         style="top:26px; background:${color}; color:${color}; box-shadow:0 0 8px ${color}; opacity:0;"
+                         data-target-top="${percent}%"
+                         title="${bp} bp">
+                        <span style="position:absolute;right:-40px;top:-2px;font-size:9px;font-family:var(--font-mono);color:#94a3b8;opacity:0;transition:opacity .2s;white-space:nowrap">${bp}bp</span>
+                    </div>
+                `;
+            });
+            laneHtml += '</div>';
+            return laneHtml;
+        }
+
+        // Show bp label on hover
+        document.addEventListener('mouseover', e => {
+            if (e.target.classList.contains('dna-band')) {
+                e.target.querySelector('span').style.opacity = '1';
+            }
+        });
+        document.addEventListener('mouseout', e => {
+            if (e.target.classList.contains('dna-band')) {
+                e.target.querySelector('span').style.opacity = '0';
+            }
+        });
+
+        function runGel() {
+            if (!isLoaded) return;
+            document.getElementById('tankArea').classList.add('uv-active');
+            setUVStatus(true);
+
+            document.querySelectorAll('.dna-band').forEach(band => {
+                band.style.opacity = '0.9';
+                setTimeout(() => { band.style.top = band.getAttribute('data-target-top'); }, 80);
+            });
+
+            const runBtn = document.getElementById('runBtn');
+            runBtn.disabled = true;
+            runBtn.textContent = 'Running...';
+        }
+
+        function setUVStatus(on) {
+            let pill  = document.getElementById('uvPill');
+            let label = document.getElementById('uvLabel');
+            if (on) { pill.classList.add('active'); label.textContent = 'UV On'; }
+            else    { pill.classList.remove('active'); label.textContent = 'UV Off'; }
+        }
+
+        // Dr. Nexus Page Context Provider
+        window.nexusContext = function() {
+            const l1 = document.getElementById('lane1')?.value || '';
+            const l2 = document.getElementById('lane2')?.value || '';
+            const l3 = document.getElementById('lane3')?.value || '';
+            const isUV = document.getElementById('uvPill')?.classList.contains('active');
+
+            return {
+                tool: "Virtual Gel Electrophoresis",
+                icon: "🧫",
+                accent: "#06B6D4",
+                active: isLoaded,
+                summary: isLoaded ? `1.0% Agarose Gel · ${isUV ? 'UV Active (Migrated)' : 'Wells Loaded'}` : "Agarose tank empty (click Load Wells)",
+                quickPrompts: [
+                    "Why do smaller DNA fragments migrate farther towards the anode?",
+                    "How would increasing agarose concentration to 2.0% change band resolution?",
+                    "Estimate the migration distance of an unknown 1200 bp band"
+                ],
+                data: {
+                    matrix: "1.0% Agarose Gel",
+                    molecularLadder: ladderFragments.join(', ') + ' bp',
+                    lane1Samples: l1,
+                    lane2Samples: l2,
+                    lane3Samples: l3,
+                    isGelRunning: isUV,
+                    status: isLoaded ? (isUV ? "Bands migrated under UV" : "Wells loaded") : "Unloaded"
+                }
+            };
+        };
+    </script>
+    <script src="../js/nexus-widget.js"></script>
+</body>
+</html>

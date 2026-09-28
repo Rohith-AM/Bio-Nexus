@@ -2,159 +2,181 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NEXORA | Advanced Restriction Mapper</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restriction Mapper — Bio-Nexus</title>
     <link rel="stylesheet" href="tool-shell.css">
     <style>
-        .cut-site { position: relative; display: inline-block; }
-        /* Custom Scrollbar for dropdown */
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; border-radius: 4px;}
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
+        :root { --tool-accent: #EF4444; }
+
+        /* Enzyme badge colors (dynamic, keep Tailwind-free since we dropped it) */
+        .enz-0  { background: rgba(239,68,68,.15);  border-color:rgba(239,68,68,.35);  color:#fca5a5; }
+        .enz-1  { background: rgba(59,130,246,.15); border-color:rgba(59,130,246,.35); color:#93c5fd; }
+        .enz-2  { background: rgba(34,197,94,.15);  border-color:rgba(34,197,94,.35);  color:#86efac; }
+        .enz-3  { background: rgba(234,179,8,.15);  border-color:rgba(234,179,8,.35);  color:#fde047; }
+        .enz-4  { background: rgba(168,85,247,.15); border-color:rgba(168,85,247,.35); color:#d8b4fe; }
+        .enz-5  { background: rgba(236,72,153,.15); border-color:rgba(236,72,153,.35); color:#f9a8d4; }
+        .enz-6  { background: rgba(6,182,212,.15);  border-color:rgba(6,182,212,.35);  color:#67e8f9; }
+        .enz-7  { background: rgba(249,115,22,.15); border-color:rgba(249,115,22,.35); color:#fdba74; }
+
+        /* Visual DNA map */
+        #visualMap {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            line-height: 2;
+            letter-spacing: 0.08em;
+            word-break: break-all;
+            padding: 14px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text3);
+        }
+
+        /* Cut site result cards */
+        .cut-card {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px;
+            border-top: 2px solid;
+        }
+        .cut-card + .cut-card { margin-top: 8px; }
+        .cut-card-name { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+        .cut-card-seq  { font-family: var(--font-mono); font-size: 11px; color: var(--text2); }
+        .cut-card-hits { font-size: 22px; font-weight: 700; color: var(--text); }
+        .cut-card-pos  { font-family: var(--font-mono); font-size: 11px; color: var(--text3); margin-top: 6px; max-height: 60px; overflow-y: auto; }
+
+        #selectedBadges { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; padding: 6px 0; }
     </style>
 </head>
-<body class="tool-body bg-slate-950 text-white font-sans min-h-screen flex flex-col relative overflow-x-hidden">
+<body>
 
-    <div class="absolute inset-0 z-0 opacity-5 pointer-events-none" 
-         style="background-image: linear-gradient(#4f46e5 1px, transparent 1px), linear-gradient(90deg, #4f46e5 1px, transparent 1px); background-size: 40px 40px;">
-    </div>
-
-    <nav class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
-        <h1 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-500 flex items-center gap-2">
-            🧬 BIO-NEXUS <span class="text-xs text-slate-400 border border-slate-700 px-2 py-0.5 rounded-full ml-2">REBASE Engine v1.0</span>
-        </h1>
-        <a href="../index.html" class="text-slate-400 hover:text-white transition font-bold tracking-wider text-sm uppercase">← Nexus Hub</a>
+    <!-- Topbar -->
+    <nav class="nt-topbar">
+        <a href="../index.html" class="nt-brand">
+            <span class="nt-brand-dot"></span>Bio-Nexus
+        </a>
+        <span class="nt-tool-name">Restriction Mapper</span>
+        <a href="../index.html" class="nt-hub-link">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Hub
+        </a>
     </nav>
 
-    <div class="container mx-auto p-5 max-w-5xl flex-grow mt-4 relative z-10">
-        
-        <div class="bg-slate-900 border border-slate-700 p-6 rounded-2xl shadow-2xl mb-6">
-            <h2 class="text-xl font-bold mb-4 text-emerald-400">🔍 Select Restriction Enzymes</h2>
-            
-            <div class="relative mb-4">
-                <input type="text" id="enzSearch" oninput="handleEnzSearch()" onclick="handleEnzSearch()" placeholder="Search from 5600+ REBASE enzymes (e.g., EcoRI, AluI, TaqI)..." 
-                       class="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition shadow-inner">
-                
-                <div id="enzSuggestions" class="absolute w-full mt-1 bg-slate-800 border border-slate-600 rounded-xl shadow-2xl hidden max-h-48 overflow-y-auto z-50 custom-scrollbar"></div>
+    <div class="nt-page">
+        <main class="nt-main nt-main--wide" style="max-width:860px">
+
+            <div class="nt-page-header">
+                <h1 class="nt-page-title">Restriction Mapper</h1>
+                <p class="nt-page-desc">Search and map restriction enzyme cut sites across a DNA sequence using the full REBASE database (5600+ enzymes).</p>
             </div>
 
-            <div id="selectedBadges" class="flex flex-wrap gap-2 mt-4 min-h-[40px] p-2 bg-slate-950/50 rounded-lg border border-slate-800/50">
-                <span class="text-slate-500 text-sm italic mt-1 ml-2" id="emptyBadgeMsg">No enzymes selected. Search and add above!</span>
+            <!-- Enzyme selector -->
+            <div class="nt-card">
+                <label class="nt-label">Select Restriction Enzymes</label>
+                <div style="position:relative">
+                    <div class="nt-search-wrap">
+                        <svg class="nt-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+                        <input type="text" id="enzSearch" class="nt-input" oninput="handleEnzSearch()" onclick="handleEnzSearch()"
+                            placeholder="Search 5600+ enzymes (e.g. EcoRI, AluI, TaqI)..." autocomplete="off">
+                    </div>
+                    <div id="enzSuggestions" class="nt-dropdown hidden"></div>
+                </div>
+                <div class="nt-gap"></div>
+                <div id="selectedBadges">
+                    <span id="emptyBadgeMsg" style="font-size:12px;color:var(--text3);align-self:center">No enzymes selected — search to add.</span>
+                </div>
             </div>
-        </div>
 
-        <div class="bg-slate-900 p-8 rounded-2xl shadow-2xl border border-slate-700">
-            <label class="block text-slate-300 mb-2 font-bold text-lg">Paste DNA Sequence (5' to 3'):</label>
-            <textarea id="dnaInput" class="w-full p-4 bg-slate-950 rounded-xl border border-slate-600 font-mono text-emerald-400 focus:outline-none focus:border-indigo-500 h-32 transition shadow-inner" placeholder="AGCACATTTACTACGACTCAGAATTCAAGAAGTGGTCTAACGTGTTTATTGGATCCTAGAATCATTAGTCATATCGATGGAGCTGCCTGTTAGAGCAGCG"></textarea>
+            <div class="nt-gap"></div>
 
-            <button onclick="mapDNA()" class="mt-6 w-full py-4 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold shadow-lg shadow-indigo-500/20 transition text-lg tracking-wide uppercase">
-                Scan Sequence 🧬
-            </button>
+            <!-- Sequence input -->
+            <div class="nt-card">
+                <label class="nt-label">DNA Sequence (5' → 3')</label>
+                <textarea id="dnaInput" class="nt-textarea" rows="4"
+                    placeholder="AGCACATTTACTACGACTCAGAATTCAAGAAGTGGTCTAACGTGTTT..." spellcheck="false"
+                    style="text-transform:uppercase"></textarea>
+                <div class="nt-gap"></div>
+                <button onclick="mapDNA()" class="nt-btn nt-btn--primary nt-btn--full">
+                    Scan Sequence
+                </button>
+            </div>
 
-            <div id="results" class="mt-10 hidden opacity-0 transition-opacity duration-500">
-                
-                <div class="mb-8">
-                    <h3 class="text-xl font-bold text-slate-200 mb-3 flex items-center gap-2">🗺️ Interactive DNA Map</h3>
-                    <div id="visualMap" class="w-full p-6 bg-slate-950 border border-slate-700 rounded-xl text-slate-500 font-mono break-all leading-loose text-lg tracking-[0.15em] shadow-inner">
-                        </div>
+            <!-- Results -->
+            <div id="results" class="hidden nt-anim">
+                <div class="nt-gap-lg"></div>
+
+                <div class="nt-card">
+                    <p class="nt-card-title">Interactive DNA Map</p>
+                    <div id="visualMap">Run a scan to see the annotated sequence.</div>
                 </div>
 
-                <h3 class="text-xl font-bold text-slate-200 border-b border-slate-700 pb-2">📊 Cut Site Analysis</h3>
-                <div id="outputList" class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    </div>
+                <div class="nt-gap-lg"></div>
+
+                <p class="nt-card-title" style="padding:0 4px">Cut Site Analysis</p>
+                <div class="nt-gap"></div>
+                <div id="outputList"></div>
             </div>
-        </div>
+
+        </main>
     </div>
 
     <script>
-        // ==========================================
-        // 1. DATA & STATE MANAGEMENT
-        // ==========================================
         let globalEnzymeDB = {};
-        let selectedEnzymes = ["EcoRI", "BamHI", "HindIII", "AluI", "NotI", "XbaI"]; 
-        
-        const colorPalettes = [
-            { bg: 'bg-red-900/60', text: 'text-red-300', border: 'border-red-500', badge: 'bg-red-500' },
-            { bg: 'bg-blue-900/60', text: 'text-blue-300', border: 'border-blue-500', badge: 'bg-blue-500' },
-            { bg: 'bg-green-900/60', text: 'text-green-300', border: 'border-green-500', badge: 'bg-green-500' },
-            { bg: 'bg-yellow-900/60', text: 'text-yellow-300', border: 'border-yellow-500', badge: 'bg-yellow-500' },
-            { bg: 'bg-purple-900/60', text: 'text-purple-300', border: 'border-purple-500', badge: 'bg-purple-500' },
-            { bg: 'bg-pink-900/60', text: 'text-pink-300', border: 'border-pink-500', badge: 'bg-pink-500' },
-            { bg: 'bg-cyan-900/60', text: 'text-cyan-300', border: 'border-cyan-500', badge: 'bg-cyan-500' },
-            { bg: 'bg-orange-900/60', text: 'text-orange-300', border: 'border-orange-500', badge: 'bg-orange-500' }
-        ];
+        let selectedEnzymes = ["EcoRI", "BamHI", "HindIII", "AluI", "NotI", "XbaI"];
+
+        const ENZ_CLASSES = ['enz-0','enz-1','enz-2','enz-3','enz-4','enz-5','enz-6','enz-7'];
+        const ENZ_COLORS  = ['#fca5a5','#93c5fd','#86efac','#fde047','#d8b4fe','#f9a8d4','#67e8f9','#fdba74'];
+        const ENZ_BORDERS = ['#ef4444','#3b82f6','#22c55e','#eab308','#a855f7','#ec4899','#06b6d4','#f97316'];
 
         const iupacMap = {
-            'A': 'A', 'C': 'C', 'G': 'G', 'T': 'T',
-            'R': '[GA]', 'Y': '[CT]', 'M': '[AC]', 'K': '[GT]', 'S': '[GC]', 'W': '[AT]',
-            'B': '[CGT]', 'D': '[AGT]', 'H': '[ACT]', 'V': '[ACG]', 'N': '[ACGT]'
+            'A':'A','C':'C','G':'G','T':'T',
+            'R':'[GA]','Y':'[CT]','M':'[AC]','K':'[GT]','S':'[GC]','W':'[AT]',
+            'B':'[CGT]','D':'[AGT]','H':'[ACT]','V':'[ACG]','N':'[ACGT]'
         };
 
-        // ==========================================
-        // 2. INITIALIZATION & SEARCH UI
-        // ==========================================
         async function loadRebaseDatabase() {
             try {
                 const res = await fetch('rebase.json');
                 globalEnzymeDB = await res.json();
-                console.log(`🚀 REBASE Engine Online! Loaded ${Object.keys(globalEnzymeDB).length} enzymes.`);
                 renderSelectedBadges();
             } catch(e) {
-                console.error("Error loading rebase.json. Make sure the file exists!", e);
-                alert("Failed to load Enzyme Database. Check console for details.");
+                console.error("Failed to load rebase.json", e);
             }
         }
-        
         loadRebaseDatabase();
 
-        // UPDATED: Smart Default Search function!
         function handleEnzSearch() {
             let q = document.getElementById('enzSearch').value.toUpperCase();
             let box = document.getElementById('enzSuggestions');
-            
-            let matches = [];
-            
-            // If empty, show popular enzymes
-            if(q.length < 1) { 
-                matches = ["EcoRI", "BamHI", "HindIII", "AluI", "NotI", "TaqI", "XbaI", "SmaI", "PstI", "SalI"];
-            } else {
-                // Otherwise, search the DB
-                matches = Object.keys(globalEnzymeDB).filter(e => e.toUpperCase().includes(q)).slice(0, 15);
-            }
+            let matches = q.length < 1
+                ? ["EcoRI","BamHI","HindIII","AluI","NotI","TaqI","XbaI","SmaI","PstI","SalI"]
+                : Object.keys(globalEnzymeDB).filter(e => e.toUpperCase().includes(q)).slice(0, 12);
 
             box.innerHTML = '';
-            
-            if(matches.length > 0) {
-                box.classList.remove('hidden');
-                
-                // Add header for the default list
-                if(q.length < 1) {
-                    box.innerHTML = '<div class="px-4 py-2 bg-slate-950 text-xs text-indigo-400 font-bold uppercase tracking-widest sticky top-0 border-b border-slate-700 shadow-md z-10">⭐ Frequently Used Enzymes</div>';
-                }
+            if (!matches.length) { box.classList.add('hidden'); return; }
 
-                matches.forEach(m => {
-                    let seq = globalEnzymeDB[m] || "Loading..."; 
-                    let div = document.createElement('div');
-                    div.className = "px-4 py-3 hover:bg-indigo-600 border-b border-slate-700 cursor-pointer transition flex justify-between items-center group";
-                    div.innerHTML = `<span class="font-bold text-white group-hover:text-white">${m}</span> <span class="text-xs font-mono text-slate-400 bg-slate-900 group-hover:bg-slate-800 px-2 py-1 rounded shadow-inner">${seq}</span>`;
-                    
-                    div.onclick = () => { 
-                        addEnzyme(m); 
-                        box.classList.add('hidden'); 
-                        document.getElementById('enzSearch').value=''; 
-                    };
-                    box.appendChild(div);
-                });
-            } else { 
-                box.classList.add('hidden'); 
+            box.classList.remove('hidden');
+            if (q.length < 1) {
+                box.innerHTML = `<div class="nt-dropdown-header">Frequently Used</div>`;
             }
+            matches.forEach(m => {
+                let seq = globalEnzymeDB[m] || '';
+                let div = document.createElement('div');
+                div.className = 'nt-dropdown-item';
+                div.innerHTML = `<span class="nt-dropdown-item-name">${m}</span><span class="nt-dropdown-item-meta">${seq}</span>`;
+                div.onclick = () => { addEnzyme(m); box.classList.add('hidden'); document.getElementById('enzSearch').value = ''; };
+                box.appendChild(div);
+            });
         }
 
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#enzSearch') && !e.target.closest('#enzSuggestions'))
+                document.getElementById('enzSuggestions').classList.add('hidden');
+        });
+
         function addEnzyme(name) {
-            if(!selectedEnzymes.includes(name)) {
-                selectedEnzymes.push(name);
-                renderSelectedBadges();
-            }
+            if (!selectedEnzymes.includes(name)) { selectedEnzymes.push(name); renderSelectedBadges(); }
         }
 
         function removeEnzyme(name) {
@@ -162,128 +184,154 @@
             renderSelectedBadges();
         }
 
-       function renderSelectedBadges() {
+        function renderSelectedBadges() {
             let container = document.getElementById('selectedBadges');
-            
-            let html = `<span class="text-slate-500 text-sm italic mt-1 ml-2 ${selectedEnzymes.length > 0 ? 'hidden' : ''}" id="emptyBadgeMsg">No enzymes selected. Search and add above!</span>`;
-            
-            selectedEnzymes.forEach((enz, index) => {
-                let color = colorPalettes[index % colorPalettes.length];
-                html += `
-                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold shadow-sm border ${color.bg} ${color.border} ${color.text}">
-                        <span>${enz}</span>
-                        <button onclick="removeEnzyme('${enz}')" class="text-white hover:text-red-400 ml-1 bg-black/20 rounded-full w-5 h-5 flex items-center justify-center transition">×</button>
-                    </div>
-                `;
+            let emptyMsg  = document.getElementById('emptyBadgeMsg');
+            if (selectedEnzymes.length === 0) {
+                container.innerHTML = '';
+                container.appendChild(emptyMsg || (() => {
+                    let s = document.createElement('span');
+                    s.id = 'emptyBadgeMsg';
+                    s.style = 'font-size:12px;color:var(--text3);align-self:center';
+                    s.textContent = 'No enzymes selected — search to add.';
+                    return s;
+                })());
+                return;
+            }
+            container.innerHTML = '';
+            selectedEnzymes.forEach((enz, i) => {
+                let cls = ENZ_CLASSES[i % ENZ_CLASSES.length];
+                let btn = document.createElement('span');
+                btn.className = `nt-enzyme-badge ${cls}`;
+                btn.innerHTML = `${enz}<button class="nt-enzyme-badge-remove" onclick="removeEnzyme('${enz}')">×</button>`;
+                container.appendChild(btn);
             });
-            
-            container.innerHTML = html;
         }
 
-        // ==========================================
-        // 3. CORE SCANNING ALGORITHM
-        // ==========================================
         function getRegexFromSequence(seq) {
-            let regexStr = "";
-            for(let char of seq.toUpperCase()) { regexStr += iupacMap[char] || char; }
-            return new RegExp(`(?=(${regexStr}))`, 'g'); 
+            let r = "";
+            for (let c of seq.toUpperCase()) r += iupacMap[c] || c;
+            return new RegExp(`(?=(${r}))`, 'g');
         }
 
         function mapDNA() {
-            let rawInput = document.getElementById('dnaInput').value.toUpperCase();
-            let dna = rawInput.replace(/[^ATGC]/g, ''); 
-            let resultsSection = document.getElementById('results');
+            let dna = document.getElementById('dnaInput').value.toUpperCase().replace(/[^ATGC]/g, '');
+            let results = document.getElementById('results');
             let outputDiv = document.getElementById('outputList');
             let visualMap = document.getElementById('visualMap');
-            
-            outputDiv.innerHTML = ""; 
-            
-            if(!dna || selectedEnzymes.length === 0) {
-                alert("Please enter a valid DNA sequence and select at least one enzyme!");
+
+            outputDiv.innerHTML = '';
+            if (!dna || selectedEnzymes.length === 0) {
+                alert("Please enter a DNA sequence and select at least one enzyme.");
                 return;
             }
 
-            resultsSection.classList.remove('hidden');
-            setTimeout(() => resultsSection.classList.remove('opacity-0'), 50);
+            results.classList.remove('hidden');
 
-            let charMap = dna.split('').map(c => ({ char: c, enzymes: [], colors: [] }));
+            let charMap = dna.split('').map(c => ({ char: c, enz: [], color: null, border: null }));
             let foundAny = false;
 
             selectedEnzymes.forEach((enz, index) => {
                 let seq = globalEnzymeDB[enz];
-                if(!seq) return; 
-
+                if (!seq) return;
                 let regex = getRegexFromSequence(seq);
-                let colorTheme = colorPalettes[index % colorPalettes.length];
-                let match;
+                let color  = ENZ_COLORS[index % ENZ_COLORS.length];
+                let border = ENZ_BORDERS[index % ENZ_BORDERS.length];
+                let cls    = ENZ_CLASSES[index % ENZ_CLASSES.length];
                 let positions = [];
+                let match;
 
                 while ((match = regex.exec(dna)) !== null) {
-                    let actualMatch = match[1]; 
-                    positions.push(match.index + 1); 
-                    
-                    for(let i = 0; i < actualMatch.length; i++) {
-                        let target = charMap[match.index + i];
-                        if(target) {
-                            target.enzymes.push(enz);
-                            if(!target.colors.includes(colorTheme)) target.colors.push(colorTheme);
+                    let actual = match[1];
+                    positions.push(match.index + 1);
+                    for (let i = 0; i < actual.length; i++) {
+                        let t = charMap[match.index + i];
+                        if (t && !t.enz.includes(enz)) {
+                            t.enz.push(enz);
+                            if (!t.color) { t.color = color; t.border = border; }
                         }
                     }
-                    regex.lastIndex = match.index + 1; 
+                    regex.lastIndex = match.index + 1;
                 }
 
                 if (positions.length > 0) {
                     foundAny = true;
-                    outputDiv.innerHTML += `
-                        <div class="bg-slate-800/80 p-5 rounded-xl border-t-4 ${colorTheme.border} backdrop-blur-sm shadow-md hover:-translate-y-1 transition">
-                            <div class="flex items-center gap-2 mb-3">
-                                <span class="w-3 h-3 rounded-full ${colorTheme.badge} shadow-lg shadow-${colorTheme.badge.split('-')[1]}-500/50"></span>
-                                <h4 class="font-bold text-xl text-white tracking-wide">${enz}</h4>
-                            </div>
-                            <p class="text-sm text-slate-400">Target: <span class="font-mono text-emerald-300 bg-slate-950 px-2 py-0.5 rounded border border-slate-700">${seq}</span></p>
-                            <p class="text-sm mt-2 text-slate-300">Hits: <b class="text-white text-lg">${positions.length}</b> times</p>
-                            <div class="mt-3 bg-slate-950 p-2 rounded max-h-20 overflow-y-auto custom-scrollbar">
-                                <p class="text-xs text-slate-400 font-mono">Pos: ${positions.join(', ')}</p>
-                            </div>
+                    let card = document.createElement('div');
+                    card.className = 'cut-card nt-anim';
+                    card.style.borderTopColor = border;
+                    card.innerHTML = `
+                        <div class="cut-card-name">${enz}
+                            <span class="nt-badge" style="font-size:10px;margin-left:6px">${seq}</span>
                         </div>
+                        <div style="display:flex;align-items:baseline;gap:10px;margin-top:8px">
+                            <span class="cut-card-hits">${positions.length}</span>
+                            <span style="font-size:12px;color:var(--text2)">cut site${positions.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div class="cut-card-pos">Positions: ${positions.join(', ')}</div>
                     `;
+                    outputDiv.appendChild(card);
                 }
             });
 
-            if (foundAny) {
-                let visualHTML = '';
-                let currentEnzSet = '';
-
-                for(let i = 0; i < charMap.length; i++) {
-                    let c = charMap[i];
-                    let enzSetStr = c.enzymes.join(','); 
-
-                    if(enzSetStr !== currentEnzSet) {
-                        if(i !== 0) visualHTML += '</span>'; 
-                        if(enzSetStr === '') {
-                            visualHTML += '<span class="text-slate-600">'; 
-                        } else {
-                            let bg = c.colors[0].bg;
-                            let text = c.colors[0].text;
-                            let title = c.enzymes.map(e => `✂️ ${e}`).join(' | '); 
-                            
-                            visualHTML += `<span class="${bg} ${text} font-bold px-0.5 rounded cursor-help border-b-2 border-white/20 hover:border-white transition-colors" title="${title}">`;
-                        }
-                        currentEnzSet = enzSetStr;
+            // Build visual map
+            let html = '';
+            let currEnzStr = null;
+            for (let i = 0; i < charMap.length; i++) {
+                let c = charMap[i];
+                let enzStr = c.enz.join(',');
+                if (enzStr !== currEnzStr) {
+                    if (i > 0) html += '</span>';
+                    if (!enzStr) {
+                        html += '<span style="color:var(--text3)">';
+                    } else {
+                        html += `<span style="color:${c.color};font-weight:700;border-bottom:2px solid ${c.border}" title="${c.enz.map(e=>'✂ '+e).join(' | ')}">`;
                     }
-                    visualHTML += c.char;
+                    currEnzStr = enzStr;
                 }
-                visualHTML += '</span>'; 
-                visualMap.innerHTML = visualHTML;
+                html += c.char;
+            }
+            html += '</span>';
+
+            if (!foundAny) {
+                visualMap.innerHTML = `<span style="color:var(--text3)">${dna}</span>`;
+                outputDiv.innerHTML = `<div class="nt-card" style="text-align:center;color:var(--text2);padding:28px">No cut sites found for the selected enzymes in this sequence.</div>`;
             } else {
-                visualMap.innerHTML = `<span class="text-slate-600">${dna}</span>`;
-                outputDiv.innerHTML = `
-                    <div class="col-span-full bg-slate-800 p-8 rounded-xl text-center border border-slate-700">
-                        <p class="text-slate-400 text-xl">🧬 No cut sites found for the selected enzymes.</p>
-                        <p class="text-sm text-slate-500 mt-2">Try searching and adding different enzymes from the REBASE engine above!</p>
-                    </div>`;
+                visualMap.innerHTML = html;
             }
         }
+
+        // Dr. Nexus Page Context Provider
+        window.nexusContext = function() {
+            const raw = document.getElementById('dnaInput')?.value.trim() || '';
+            const cuts = Array.from(document.querySelectorAll('#outputList .cut-card')).map(card => {
+                const name = card.querySelector('.cut-card-name')?.textContent?.trim() || '';
+                const hits = card.querySelector('.cut-card-hits')?.textContent?.trim() || '0';
+                const pos = card.querySelector('.cut-card-pos')?.textContent?.trim() || '';
+                return `${name}: ${hits} cuts (${pos})`;
+            });
+
+            return {
+                tool: "Restriction Mapper",
+                icon: "✂️",
+                accent: "#EF4444",
+                active: Boolean(raw || selectedEnzymes.length > 0),
+                summary: raw 
+                    ? `Sequence ${raw.length} bp · Enzymes: ${selectedEnzymes.slice(0, 4).join(', ')} · ${cuts.length} cut profiles`
+                    : `Selected Enzymes: ${selectedEnzymes.join(', ')}`,
+                quickPrompts: [
+                    "Which of these enzymes is ideal for directional cloning?",
+                    "Analyze the cut site distribution across my sequence",
+                    "Are any of these enzymes producing blunt versus sticky overhangs?"
+                ],
+                data: {
+                    selectedEnzymes: selectedEnzymes,
+                    sequenceLength: raw ? raw.length + ' bp' : null,
+                    sequenceSnippet: raw ? (raw.length > 250 ? raw.slice(0, 250) + '... (truncated)' : raw) : null,
+                    cutSiteResults: cuts.length > 0 ? cuts : "Scan not run or 0 cut sites"
+                }
+            };
+        };
     </script>
+    <script src="../js/nexus-widget.js"></script>
 </body>
 </html>

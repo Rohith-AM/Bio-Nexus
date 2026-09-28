@@ -1,139 +1,149 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reverse Complement | Bio-Nexus</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Reverse Complement — Bio-Nexus</title>
     <link rel="stylesheet" href="tool-shell.css">
-    <script>
-    // Check local storage and apply the theme immediately
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-    } else {
-        document.documentElement.classList.remove('dark');
-    }
-    </script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        mono: ['JetBrains Mono', 'monospace'],
-                        sans: ['Space Grotesk', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
-        body { font-family: 'Space Grotesk', sans-serif; }
-    </style>
+    <style> :root { --tool-accent: #8B5CF6; } </style>
 </head>
-<body class="tool-body bg-slate-900 text-slate-200 min-h-screen p-6 flex flex-col items-center">
+<body>
 
-    <nav class="w-full max-w-4xl mb-8 flex justify-between items-center">
-        <a href="../index.html" class="flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition">
-            <span>←</span> Back to Nexus
+    <!-- Topbar -->
+    <nav class="nt-topbar">
+        <a href="../index.html" class="nt-brand">
+            <span class="nt-brand-dot"></span>Bio-Nexus
         </a>
-        <h1 class="text-xl font-bold tracking-widest text-emerald-500">BIO-NEXUS 🧬</h1>
+        <span class="nt-tool-name">Reverse Complement</span>
+        <a href="../index.html" class="nt-hub-link">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Hub
+        </a>
     </nav>
 
-    <main class="w-full max-w-3xl bg-slate-800/50 backdrop-blur-md border border-slate-700 p-8 rounded-2xl shadow-2xl">
-        
-        <h2 class="text-3xl font-bold text-white mb-2">🔄 Reverse & Complement</h2>
-        <p class="text-slate-400 mb-6 text-sm">Enter a DNA sequence to get its reverse, complement, and reverse-complement strands instantly.</p>
+    <div class="nt-page">
+        <main class="nt-main">
 
-        <div class="mb-6 relative">
-            <textarea id="seqInput" rows="3" 
-                class="w-full bg-slate-900/80 border border-slate-600 rounded-xl p-4 text-emerald-300 focus:outline-none focus:border-emerald-500 font-mono uppercase tracking-widest placeholder-slate-600"
-                placeholder="ATGC..."></textarea>
-            <button onclick="clearInput()" class="absolute top-2 right-2 text-xs text-slate-500 hover:text-red-400">CLEAR</button>
-        </div>
-
-        <button onclick="processSequence()" 
-            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-lg hover:shadow-emerald-500/20 mb-8">
-            Generate Strands ⚡
-        </button>
-
-        <div id="outputSection" class="grid grid-cols-1 gap-6 hidden opacity-0 transition-opacity duration-500">
-            
-            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 relative group">
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Reverse Sequence</label>
-                <div id="revOutput" class="font-mono text-blue-400 break-all">---</div>
-                <button onclick="copyToClipboard('revOutput')" class="absolute top-3 right-3 text-slate-600 hover:text-white opacity-0 group-hover:opacity-100 transition">📋</button>
+            <div class="nt-page-header">
+                <h1 class="nt-page-title">Reverse Complement</h1>
+                <p class="nt-page-desc">Generates the reverse, complement, and reverse-complement of any DNA sequence instantly.</p>
             </div>
 
-            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 relative group">
-                <label class="text-xs font-bold text-slate-500 uppercase mb-1 block">Complement Sequence</label>
-                <div id="compOutput" class="font-mono text-purple-400 break-all">---</div>
-                <button onclick="copyToClipboard('compOutput')" class="absolute top-3 right-3 text-slate-600 hover:text-white opacity-0 group-hover:opacity-100 transition">📋</button>
+            <!-- Input -->
+            <div class="nt-card">
+                <label class="nt-label">DNA Sequence (5' → 3')</label>
+                <div style="position:relative">
+                    <textarea id="seqInput" class="nt-textarea" rows="4"
+                        placeholder="ATGC..." spellcheck="false" autocorrect="off"
+                        style="text-transform:uppercase"></textarea>
+                    <button onclick="clearInput()"
+                        style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:11px;color:var(--text3);cursor:pointer;font-family:var(--font-sans)">
+                        Clear
+                    </button>
+                </div>
+                <div class="nt-gap"></div>
+                <button onclick="processSequence()" class="nt-btn nt-btn--primary nt-btn--full">
+                    Generate Strands
+                </button>
             </div>
 
-            <div class="bg-slate-900 p-4 rounded-xl border border-emerald-500/30 relative group shadow-lg shadow-emerald-900/20">
-                <label class="text-xs font-bold text-emerald-500 uppercase mb-1 block">🔥 Reverse Complement</label>
-                <div id="revCompOutput" class="font-mono text-yellow-400 font-bold break-all">---</div>
-                <button onclick="copyToClipboard('revCompOutput')" class="absolute top-3 right-3 text-slate-600 hover:text-white opacity-0 group-hover:opacity-100 transition">📋</button>
+            <!-- Output -->
+            <div id="outputSection" class="hidden nt-anim">
+                <div class="nt-gap-lg"></div>
+                <div class="nt-card">
+                    <p class="nt-card-title">Strand Outputs</p>
+
+                    <div class="nt-result-block">
+                        <p class="nt-result-label">Reverse Sequence</p>
+                        <div id="revOutput" class="nt-result-value" style="color:#60a5fa">---</div>
+                        <button class="nt-result-copy" onclick="copyToClipboard('revOutput')">Copy</button>
+                    </div>
+
+                    <div class="nt-gap"></div>
+
+                    <div class="nt-result-block">
+                        <p class="nt-result-label">Complement Sequence</p>
+                        <div id="compOutput" class="nt-result-value" style="color:#a78bfa">---</div>
+                        <button class="nt-result-copy" onclick="copyToClipboard('compOutput')">Copy</button>
+                    </div>
+
+                    <div class="nt-gap"></div>
+
+                    <div class="nt-result-block" style="border-color:color-mix(in srgb, var(--tool-accent) 30%, transparent)">
+                        <p class="nt-result-label nt-result-label--accent">Reverse Complement (Primary Result)</p>
+                        <div id="revCompOutput" class="nt-result-value" style="color:#8B5CF6;font-weight:600">---</div>
+                        <button class="nt-result-copy" onclick="copyToClipboard('revCompOutput')">Copy</button>
+                    </div>
+                </div>
             </div>
 
-        </div>
-    </main>
+        </main>
+    </div>
 
     <script>
         function processSequence() {
             let rawSeq = document.getElementById('seqInput').value.toUpperCase();
             let seq = rawSeq.replace(/[^ATGC]/g, '');
 
-            if(!seq) { alert("Please enter a valid DNA sequence (A, T, G, C)!"); return; }
+            if (!seq) { alert("Please enter a valid DNA sequence (A, T, G, C)."); return; }
 
             let reverse = seq.split('').reverse().join('');
-            
+
             let complement = "";
             let map = { 'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G' };
-            for(let char of seq) {
-                complement += map[char] || char;
-            }
+            for (let char of seq) complement += map[char] || char;
 
             let revComp = "";
-            for(let char of reverse) {
-                revComp += map[char] || char;
-            }
+            for (let char of reverse) revComp += map[char] || char;
 
-            document.getElementById('revOutput').innerText = reverse;
-            document.getElementById('compOutput').innerText = complement;
+            document.getElementById('revOutput').innerText     = reverse;
+            document.getElementById('compOutput').innerText    = complement;
             document.getElementById('revCompOutput').innerText = revComp;
 
-            let outDiv = document.getElementById('outputSection');
-            outDiv.classList.remove('hidden');
-            setTimeout(() => outDiv.classList.remove('opacity-0'), 50);
+            document.getElementById('outputSection').classList.remove('hidden');
         }
 
         function clearInput() {
             document.getElementById('seqInput').value = '';
-            document.getElementById('outputSection').classList.add('hidden', 'opacity-0');
+            document.getElementById('outputSection').classList.add('hidden');
         }
 
-        function copyToClipboard(elementId) {
-            let text = document.getElementById(elementId).innerText;
-            navigator.clipboard.writeText(text);
-            alert("Copied to clipboard! ✅");
+        function copyToClipboard(id) {
+            let text = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const el = document.getElementById(id);
+                const orig = el.innerText;
+                el.innerText = 'Copied!';
+                setTimeout(() => el.innerText = orig, 1200);
+            });
         }
+
+        // Dr. Nexus Page Context Provider
+        window.nexusContext = function() {
+            const raw = document.getElementById('seqInput')?.value.trim() || '';
+            const revComp = document.getElementById('revCompOutput')?.innerText || '';
+            const hasRes = !document.getElementById('outputSection')?.classList.contains('hidden') && revComp !== '---';
+
+            return {
+                tool: "Reverse Complement Generator",
+                icon: "🔄",
+                accent: "#8B5CF6",
+                active: Boolean(raw),
+                summary: raw ? `Strand (${raw.length} bp) · Rev-Comp generated` : "Awaiting 5'→3' sequence input",
+                quickPrompts: [
+                    "Calculate the melting temperature (Tm) of this reverse complement strand",
+                    "How should I use this reverse complement for PCR reverse primer design?",
+                    "Check this strand for potential primer-dimers or secondary hairpins"
+                ],
+                data: {
+                    originalSequence: raw ? (raw.length > 250 ? raw.slice(0, 250) + '... (truncated)' : raw) : null,
+                    reverseStrand: hasRes ? document.getElementById('revOutput')?.innerText?.slice(0, 100) : null,
+                    complementStrand: hasRes ? document.getElementById('compOutput')?.innerText?.slice(0, 100) : null,
+                    reverseComplementStrand: hasRes ? revComp.slice(0, 100) : null
+                }
+            };
+        };
     </script>
-    <footer class="py-4 border-t border-gray-200 dark:border-slate-800 mt-8 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm">
-    <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-center items-center gap-2 text-xs text-gray-500 font-mono">
-        
-        <span>© 2026 <span class="text-emerald-500 font-bold">Bio-Nexus Lab</span>.</span>
-        
-        <span class="hidden md:inline text-gray-300 dark:text-slate-700">|</span>
-        
-        <span>
-            Engineered by <span class="text-indigo-400 font-bold tracking-widest">NEXORA</span> ⚡
-        </span>
-
-    </div>
-</footer>
+    <script src="../js/nexus-widget.js"></script>
 </body>
 </html>

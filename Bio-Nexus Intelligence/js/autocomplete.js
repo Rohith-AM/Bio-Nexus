@@ -1,134 +1,128 @@
-// js/autocomplete.js
-export const Autocomplete = {
-    timer: null,
-    activeIndex: -1,
-    items: [],
-    
-    init(onSelect) {
-        const input = document.getElementById('globalSearch');
-        const box = document.getElementById('searchSuggestions');
+// js/autocomplete.js — Bio-Nexus Intelligence Autocomplete
+// Direct iNaturalist taxa autocomplete with photo previews & keyboard navigation
 
-        const renderResults = (results) => {
-            this.items = results;
+export const Autocomplete = {
+    bind(inputId, boxId, onSelect) {
+        const input = document.getElementById(inputId);
+        const box = document.getElementById(boxId);
+        if (!input || !box) return;
+
+        let timer = null;
+        let activeIndex = -1;
+        let items = [];
+
+        const closeBox = () => {
+            box.classList.add('hidden');
             box.innerHTML = '';
-            this.activeIndex = -1;
+            activeIndex = -1;
+            items = [];
+        };
+
+        const highlight = () => {
+            Array.from(box.children).forEach((child, i) => {
+                child.classList.toggle('active', i === activeIndex);
+                if (i === activeIndex) child.scrollIntoView({ block: 'nearest' });
+            });
+        };
+
+        const selectItem = (item) => {
+            if (!item) return;
+            input.value = item.name;
+            closeBox();
+            const commonName = item.preferred_common_name || item.name;
+            if (onSelect) onSelect(item.name, commonName);
+        };
+
+        const render = (results) => {
+            items = results;
+            activeIndex = -1;
+            box.innerHTML = '';
 
             if (!results.length) {
-                box.classList.add('hidden');
+                closeBox();
                 return;
             }
 
             box.classList.remove('hidden');
-            results.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = "p-3 border-b border-slate-800 hover:bg-indigo-500/20 cursor-pointer flex gap-3 items-center transition-colors group";
-                div.dataset.index = index;
 
+            results.forEach((item, index) => {
                 const common = item.preferred_common_name || item.name;
                 const sci = item.name;
-                const photo = item.default_photo?.medium_url || item.default_photo?.square_url || '';
+                const photo = item.default_photo?.square_url || item.default_photo?.medium_url || '';
 
+                const div = document.createElement('div');
+                div.className = 'ni-suggestion';
                 div.innerHTML = `
-                    <div class="w-14 h-14 rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 flex-shrink-0">
-                        ${photo ? `<img src="${photo}" class="w-full h-full object-cover" alt="${common}">` : `<div class="w-full h-full flex items-center justify-center text-slate-500 text-[10px]">No image</div>`}
+                    ${photo
+                        ? `<img class="ni-sug-photo" src="${photo}" alt="${common}" loading="lazy">`
+                        : `<div class="ni-sug-nophoto">🧬</div>`
+                    }
+                    <div class="ni-sug-text">
+                        <div class="ni-sug-common">${common}</div>
+                        <div class="ni-sug-sci">${sci}</div>
                     </div>
-                    <div class="min-w-0">
-                        <p class="text-sm font-bold text-slate-200 truncate capitalize group-hover:text-indigo-300">${common}</p>
-                        <p class="text-[10px] text-slate-400 italic truncate">${sci}</p>
-                        <span class="inline-flex mt-1 px-2 py-0.5 rounded bg-slate-800 text-[9px] uppercase tracking-wider text-slate-400">${item.rank}</span>
-                    </div>
+                    <span class="ni-sug-rank">${item.rank || 'taxon'}</span>
                 `;
 
-                div.addEventListener('mouseenter', () => this.highlight(index));
-                div.addEventListener('mouseleave', () => this.unhighlight(index));
-                div.addEventListener('click', () => {
-                    input.value = sci;
-                    box.classList.add('hidden');
-                    onSelect(sci);
+                div.addEventListener('mouseenter', () => {
+                    activeIndex = index;
+                    highlight();
                 });
+
+                div.addEventListener('click', () => selectItem(item));
 
                 box.appendChild(div);
             });
         };
 
         const fetchSuggestions = async (query) => {
-            if (!query || query.length < 3) {
-                box.classList.add('hidden');
-                return;
-            }
-
             try {
-                const res = await fetch(`https://api.inaturalist.org/v1/taxa/autocomplete?q=${encodeURIComponent(query)}&limit=6`);
+                const res = await fetch(`https://api.inaturalist.org/v1/taxa/autocomplete?q=${encodeURIComponent(query)}&limit=7`);
                 const data = await res.json();
-                renderResults(data.results || []);
-            } catch (e) {
-                console.warn("Autocomplete error", e);
-                box.classList.add('hidden');
+                render(data.results || []);
+            } catch (_) {
+                closeBox();
             }
         };
 
         input.addEventListener('input', () => {
-            clearTimeout(this.timer);
-            const query = input.value.trim();
-            this.timer = setTimeout(() => fetchSuggestions(query), 250);
+            const q = input.value.trim();
+            clearTimeout(timer);
+            if (q.length < 2) {
+                closeBox();
+                return;
+            }
+            timer = setTimeout(() => fetchSuggestions(q), 250);
         });
 
-        input.addEventListener('keydown', (e) => {
+        input.addEventListener('keydown', e => {
             if (box.classList.contains('hidden')) return;
 
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                this.activeIndex = Math.min(this.activeIndex + 1, this.items.length - 1);
-                this.updateActiveItem(box);
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                highlight();
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                this.activeIndex = Math.max(this.activeIndex - 1, 0);
-                this.updateActiveItem(box);
-            } else if (e.key === 'Enter' && this.activeIndex >= 0) {
+                activeIndex = Math.max(activeIndex - 1, 0);
+                highlight();
+            } else if (e.key === 'Enter' && activeIndex >= 0) {
                 e.preventDefault();
-                const selected = this.items[this.activeIndex];
-                if (selected) {
-                    input.value = selected.name;
-                    box.classList.add('hidden');
-                    onSelect(selected.name);
-                }
+                selectItem(items[activeIndex]);
             } else if (e.key === 'Escape') {
-                box.classList.add('hidden');
+                closeBox();
             }
         });
 
-        document.addEventListener('click', (e) => {
+        document.addEventListener('click', e => {
             if (!box.contains(e.target) && e.target !== input) {
-                box.classList.add('hidden');
+                closeBox();
             }
         });
     },
 
-    highlight(index) {
-        this.activeIndex = index;
-        const box = document.getElementById('searchSuggestions');
-        if (box) this.updateActiveItem(box);
-    },
-
-    unhighlight(index) {
-        if (this.activeIndex === index) {
-            this.activeIndex = -1;
-            const box = document.getElementById('searchSuggestions');
-            if (box) this.updateActiveItem(box);
-        }
-    },
-
-    updateActiveItem(box) {
-        const children = Array.from(box.children);
-        children.forEach((child, index) => {
-            if (index === this.activeIndex) {
-                child.classList.add('bg-indigo-500/30');
-                child.classList.remove('hover:bg-indigo-500/20');
-                child.scrollIntoView({ block: 'nearest' });
-            } else {
-                child.classList.remove('bg-indigo-500/30');
-                child.classList.add('hover:bg-indigo-500/20');
-            }
-        });
+    init(onSelect) {
+        this.bind('searchInput', 'suggestions', onSelect);
+        this.bind('inlineSearchInput', 'inlineSuggestions', onSelect);
     }
 };

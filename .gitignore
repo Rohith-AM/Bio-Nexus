@@ -1,0 +1,49 @@
+# ============================================
+# Bio-Nexus .gitignore
+# ============================================
+
+# --- Python ---
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# --- Secrets & Environment ---
+.env
+*.env
+backend/.env
+!backend/.env.example
+
+# --- Large Generated Data ---
+# Regenerate locally using: python tools/build_protein_index.py
+tools/protein-index.json
+
+# --- IDE ---
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# --- OS ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V7
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# --- Vercel ---
+.vercel
+
+# --- Node (future-proofing) ---
+node_modules/
+npm-debug.log*
