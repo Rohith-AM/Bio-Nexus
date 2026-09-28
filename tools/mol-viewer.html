@@ -235,95 +235,85 @@
     <script>
         let searchTimeout;
         let viewer;
-        let proteinList = [];
-        const localProteinFile = 'protein-index.json';
+        const SQL_API_BASE = 'http://localhost:5000/api';
 
         window.addEventListener('DOMContentLoaded', () => {
             const dropdown = document.getElementById('searchDropdown');
             if (dropdown && dropdown.parentElement !== document.body) {
                 document.body.appendChild(dropdown);
             }
-            loadProteinList();
         });
-
-        async function loadProteinList() {
-            try {
-                const response = await fetch(localProteinFile);
-                if (response.ok) proteinList = await response.json();
-            } catch(e) { console.warn('Local protein index not available:', e); }
-        }
 
         function handleSearchKey(event) {
             if (event.key === 'Enter') { event.preventDefault(); resolveAndLoadPDB(); }
         }
 
-        function getSearchScore(entry, input) {
-            const name = entry.name.toLowerCase();
-            const code = entry.code.toLowerCase();
-            let score = 0;
-            if (code === input) score += 300;
-            if (name === input) score += 250;
-            if (name.startsWith(input)) score += 180;
-            if (code.startsWith(input)) score += 160;
-            if (name.includes(input)) score += 100;
-            if (input.split(' ').every(t => name.includes(t))) score += 20;
-            score += Math.max(0, 20 - Math.min(20, name.length / 10));
-            return score;
-        }
-
         function filterSearch() {
-            let input    = document.getElementById('pdbInput').value.toLowerCase();
+            let input = document.getElementById('pdbInput').value.trim();
             let dropdown = document.getElementById('searchDropdown');
             dropdown.innerHTML = '';
             clearTimeout(searchTimeout);
 
-            if (!input || input.length < 2) { dropdown.classList.add('hidden'); return; }
+            if (!input || input.length < 2) { 
+                dropdown.classList.add('hidden'); 
+                return; 
+            }
 
             const rect = document.getElementById('pdbInput').getBoundingClientRect();
             dropdown.style.left  = rect.left + 'px';
             dropdown.style.top   = rect.bottom + 4 + 'px';
             dropdown.style.width = rect.width + 'px';
 
-            const localMatches = proteinList
-                .map(p => ({ ...p, score: getSearchScore(p, input) }))
-                .filter(p => p.score > 0)
-                .sort((a, b) => b.score - a.score)
-                .slice(0, 6);
-
-            if (localMatches.length > 0) {
-                dropdown.classList.remove('hidden');
-                localMatches.forEach(match => {
-                    let li = document.createElement('li');
-                    li.innerHTML = `<span>${match.name}</span><span>${match.code}</span>`;
-                    li.onclick = () => {
-                        document.getElementById('pdbInput').value = match.code;
-                        dropdown.classList.add('hidden');
-                        resolveAndLoadPDB();
-                    };
-                    dropdown.appendChild(li);
-                });
-                return;
-            }
-
             searchTimeout = setTimeout(async () => {
+                let matches = [];
+                // 1. Fast Query to Bio-Nexus SQLite Engine (< 2ms)
                 try {
-                    const response = await fetch(`https://search.rcsb.org/search/autocomplete?q=${encodeURIComponent(input)}&json=1&type=polymer_entity`);
-                    const data = await response.json();
-                    if (data && data.length > 0) {
-                        dropdown.classList.remove('hidden');
-                        data.slice(0, 5).forEach(item => {
-                            let li = document.createElement('li');
-                            li.innerHTML = `<span>${item.text}</span>`;
-                            li.onclick = () => {
-                                document.getElementById('pdbInput').value = item.text;
-                                dropdown.classList.add('hidden');
-                                resolveAndLoadPDB();
-                            };
-                            dropdown.appendChild(li);
+                    const localRes = await fetch(`${SQL_API_BASE}/proteins/search?q=${encodeURIComponent(input)}&limit=8`, {
+                        signal: AbortSignal.timeout(600)
+                    });
+                    if (localRes.ok) {
+                        matches = await localRes.json();
+                    }
+                } catch (err) {
+                    // Local backend offline, will fallback to RCSB
+                }
+
+                // 2. Graceful Fallback: RCSB Autocomplete API if local SQL is offline/empty
+                if (!matches || matches.length === 0) {
+                    try {
+                        const rcsbRes = await fetch(`https://search.rcsb.org/search/autocomplete?q=${encodeURIComponent(input)}&json=1&type=polymer_entity`, {
+                            signal: AbortSignal.timeout(2500)
                         });
-                    } else { dropdown.classList.add('hidden'); }
-                } catch(e) { dropdown.classList.add('hidden'); }
-            }, 250);
+                        const data = await rcsbRes.json();
+                        if (data && data.length > 0) {
+                            matches = data.slice(0, 6).map(item => ({
+                                name: item.text,
+                                code: item.text
+                            }));
+                        }
+                    } catch (e) {
+                        // ignore network errors
+                    }
+                }
+
+                // 3. Render dropdown items
+                dropdown.innerHTML = '';
+                if (matches && matches.length > 0) {
+                    dropdown.classList.remove('hidden');
+                    matches.forEach(match => {
+                        let li = document.createElement('li');
+                        li.innerHTML = `<span>${match.name}</span><span style="font-family: monospace; font-size: 11px; padding: 2px 6px; background: rgba(255,255,255,0.08); border-radius: 4px; color: #D97757;">${match.code}</span>`;
+                        li.onclick = () => {
+                            document.getElementById('pdbInput').value = match.code;
+                            dropdown.classList.add('hidden');
+                            resolveAndLoadPDB();
+                        };
+                        dropdown.appendChild(li);
+                    });
+                } else {
+                    dropdown.classList.add('hidden');
+                }
+            }, 120);
         }
 
         document.addEventListener('click', e => {

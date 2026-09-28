@@ -22,9 +22,14 @@ build/
 backend/.env
 !backend/.env.example
 
-# --- Large Generated Data ---
-# Regenerate locally using: python tools/build_protein_index.py
+# --- Large Generated Data & Databases ---
+# Regenerate locally using: python tools/build_protein_index.py and python backend/init_db.py
 tools/protein-index.json
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
 
 # --- IDE ---
 .idea/
