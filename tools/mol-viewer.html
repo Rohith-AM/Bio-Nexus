@@ -55,58 +55,42 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Control panel & multi-view styling */
-        .viewport-controls-wrap {
+        /* Workspace 3-column layout */
+        .nt-main--mol {
+            max-width: 1360px !important;
+        }
+
+        .mol-workspace-grid {
             display: flex;
             gap: 16px;
             align-items: flex-start;
         }
-        @media (max-width: 820px) {
-            .viewport-controls-wrap {
-                flex-direction: column !important;
+
+        .mol-side-panel {
+            width: 195px;
+            flex-shrink: 0;
+        }
+
+        .mol-center-panel {
+            flex: 1;
+            min-width: 0;
+        }
+
+        @media (max-width: 980px) {
+            .mol-workspace-grid {
+                flex-direction: column;
             }
-            #controlPanel {
+            .mol-side-panel {
                 width: 100% !important;
             }
         }
 
-        .view-pill-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 7px 10px;
-            border-radius: var(--radius);
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text);
-            transition: all 0.15s ease;
-            font-family: var(--font-sans);
-        }
-        .view-pill-btn:hover {
-            background: var(--bg4);
-            border-color: var(--border2);
-        }
-        .view-pill-btn.active {
-            background: rgba(59, 130, 246, 0.18);
-            border-color: var(--tool-accent);
-            color: #60A5FA;
-            font-weight: 600;
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
-        }
-        .pill-icon {
-            font-size: 13px;
-            line-height: 1;
-        }
-
-        .color-select-btn {
+        /* Control panel buttons */
+        .view-btn {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 10px;
+            padding: 9px 12px;
             border-radius: var(--radius);
             background: var(--bg3);
             border: 1px solid var(--border);
@@ -115,37 +99,44 @@
             width: 100%;
             color: var(--text);
             font-family: var(--font-sans);
+            text-align: left;
         }
-        .color-select-btn:hover {
+        .view-btn:hover { 
+            background: var(--bg4); 
+            border-color: var(--border2); 
+            transform: translateY(-1px);
+        }
+        .view-btn + .view-btn { margin-top: 6px; }
+        .view-btn-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
             background: var(--bg4);
-            border-color: var(--border2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--text2);
+            transition: all 0.15s ease;
         }
-        .color-select-btn.active {
-            background: rgba(59, 130, 246, 0.15);
+        .view-btn-title { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.2; }
+        .view-btn-sub   { font-size: 11px; color: var(--text3); margin-top: 2px; line-height: 1.2; }
+
+        /* Active State */
+        .view-btn.active {
+            background: rgba(59, 130, 246, 0.14);
             border-color: var(--tool-accent);
         }
-        .color-dot-gradient {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        .view-btn.active .view-btn-icon {
+            background: var(--tool-accent);
+            color: #FFFFFF;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.35);
         }
-        .color-select-btn .col-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text);
-            line-height: 1.2;
-        }
-        .color-select-btn.active .col-title {
+        .view-btn.active .view-btn-title {
             color: #60A5FA;
         }
-        .color-select-btn .col-desc {
-            font-size: 10px;
-            color: var(--text3);
-            margin-top: 1px;
-            line-height: 1.2;
+        .view-btn.active .view-btn-sub {
+            color: #93C5FD;
         }
 
         /* Protein info cards */
@@ -239,7 +230,7 @@
     </nav>
 
     <div class="nt-page">
-        <main class="nt-main nt-main--wide">
+        <main class="nt-main nt-main--wide nt-main--mol">
 
             <div class="nt-page-header">
                 <h1 class="nt-page-title">3D Protein Viewer</h1>
@@ -269,11 +260,108 @@
 
             <div class="nt-gap-lg"></div>
 
-            <!-- Main area: viewport + controls side by side -->
-            <div class="viewport-controls-wrap">
+            <!-- 3-Column Balanced Studio Workspace -->
+            <div class="mol-workspace-grid">
 
-                <!-- Viewport column -->
-                <div style="flex:1;min-width:0">
+                <!-- Left Panel: ChimeraX / PyMOL Color & Surface Studio -->
+                <div id="palettePanel" class="hidden mol-side-panel">
+                    <div class="nt-card" style="padding:14px;">
+                        <p class="nt-card-title" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+                            <span>Color Palette</span>
+                            <span style="font-size:9px;color:var(--tool-accent);font-weight:700;letter-spacing:0.04em;">CHIMERAX</span>
+                        </p>
+
+                        <button id="btn-col-spectrum" class="view-btn active" onclick="setColorScheme('spectrum')">
+                            <div class="view-btn-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <circle cx="12" cy="12" r="9"/>
+                                    <path d="M12 3a9 9 0 0 0 0 18"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="view-btn-title">Spectrum</div>
+                                <div class="view-btn-sub">Rainbow N → C</div>
+                            </div>
+                        </button>
+
+                        <button id="btn-col-ssPyMOL" class="view-btn" onclick="setColorScheme('ssPyMOL')">
+                            <div class="view-btn-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <path d="M4 12c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/>
+                                    <path d="M4 6c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="view-btn-title">2° Structure</div>
+                                <div class="view-btn-sub">PyMOL α/β Sheets</div>
+                            </div>
+                        </button>
+
+                        <button id="btn-col-chain" class="view-btn" onclick="setColorScheme('chain')">
+                            <div class="view-btn-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="view-btn-title">Chain Subunit</div>
+                                <div class="view-btn-sub">By Subunit</div>
+                            </div>
+                        </button>
+
+                        <button id="btn-col-element" class="view-btn" onclick="setColorScheme('element')">
+                            <div class="view-btn-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <circle cx="19" cy="5" r="2"/>
+                                    <circle cx="5" cy="19" r="2"/>
+                                    <path d="M10.5 10.5L6.5 17.5"/>
+                                    <path d="M13.5 13.5L17.5 6.5"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="view-btn-title">Element CPK</div>
+                                <div class="view-btn-sub">Atomic Elements</div>
+                            </div>
+                        </button>
+
+                        <button id="btn-col-bfactor" class="view-btn" onclick="setColorScheme('bfactor')">
+                            <div class="view-btn-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="view-btn-title">B-Factor</div>
+                                <div class="view-btn-sub">Mobility / Temp</div>
+                            </div>
+                        </button>
+
+                        <div class="nt-divider" style="margin:10px 0;"></div>
+
+                        <button id="btn-mode-surface" class="view-btn" onclick="toggleSurface()">
+                            <div class="view-btn-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+                                    <path d="M12 6a6 6 0 1 0 6 6 6 6 0 0 0-6-6z" stroke-dasharray="2 2"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="view-btn-title">Mol Surface</div>
+                                <div id="surface-status-text" class="view-btn-sub">ChimeraX Mesh</div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="nt-gap"></div>
+                    <div class="nt-info" style="font-size:11px;line-height:1.45;">
+                        🧬 <strong>Palette:</strong> Switch between PyMOL secondary structure or multimeric chain subunit colorings.
+                    </div>
+                </div>
+
+                <!-- Center Column: Viewport & Molecular Details -->
+                <div class="mol-center-panel">
                     <div id="mol-viewport">
                         <div id="statusText">Enter a protein name or PDB ID to begin.</div>
                     </div>
@@ -285,102 +373,80 @@
                     </div>
                 </div>
 
-                <!-- Controls (hidden until loaded) -->
-                <div id="controlPanel" class="hidden" style="width:230px;flex-shrink:0">
+                <!-- Right Panel: View Modes & Camera Controls (Original clean UI!) -->
+                <div id="controlPanel" class="hidden mol-side-panel">
                     <div class="nt-card" style="padding:14px;">
-                        
-                        <!-- Display Style -->
-                        <p class="nt-card-title" style="margin-bottom:8px;font-size:11px;letter-spacing:0.06em;color:var(--text3);text-transform:uppercase;font-weight:700;">
-                            Display Style
-                        </p>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;">
-                            <button id="btn-mode-cartoon" class="view-pill-btn active" onclick="setDisplayMode('cartoon')">
-                                <span class="pill-icon">🎗️</span> Cartoon
-                            </button>
-                            <button id="btn-mode-stick" class="view-pill-btn" onclick="setDisplayMode('stick')">
-                                <span class="pill-icon">🥢</span> Stick
-                            </button>
-                            <button id="btn-mode-sphere" class="view-pill-btn" onclick="setDisplayMode('sphere')">
-                                <span class="pill-icon">🌐</span> Sphere
-                            </button>
-                            <button id="btn-mode-surface" class="view-pill-btn" onclick="toggleSurface()">
-                                <span class="pill-icon">✨</span> Surface
-                            </button>
-                        </div>
+                        <p class="nt-card-title" style="margin-bottom:10px;">View Mode</p>
+
+                        <button id="btn-mode-cartoon" class="view-btn active" onclick="setDisplayMode('cartoon')">
+                            <div class="view-btn-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12c1.5-2 3.5-3 6-3s4.5 1 6 3"/><path d="M5 12c1.5 2 3.5 3 6 3s4.5-1 6-3"/></svg>
+                            </div>
+                            <div>
+                                <div class="view-btn-title">Cartoon</div>
+                                <div class="view-btn-sub">Ribbon</div>
+                            </div>
+                        </button>
+
+                        <button id="btn-mode-stick" class="view-btn" onclick="setDisplayMode('stick')">
+                            <div class="view-btn-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 5l10 14"/><path d="M17 5L7 19"/></svg>
+                            </div>
+                            <div>
+                                <div class="view-btn-title">Stick</div>
+                                <div class="view-btn-sub">Bonds</div>
+                            </div>
+                        </button>
+
+                        <button id="btn-mode-sphere" class="view-btn" onclick="setDisplayMode('sphere')">
+                            <div class="view-btn-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="8" stroke-dasharray="2 2"/></svg>
+                            </div>
+                            <div>
+                                <div class="view-btn-title">Sphere</div>
+                                <div class="view-btn-sub">Atomic</div>
+                            </div>
+                        </button>
 
                         <div class="nt-divider" style="margin:10px 0;"></div>
 
-                        <!-- Color Palette (ChimeraX / PyMOL) -->
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                            <p class="nt-card-title" style="margin:0;font-size:11px;letter-spacing:0.06em;color:var(--text3);text-transform:uppercase;font-weight:700;">
-                                Color Palette
-                            </p>
-                            <span style="font-size:9px;color:var(--tool-accent);font-weight:700;letter-spacing:0.04em;">CHIMERAX / PYMOL</span>
-                        </div>
-                        <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;">
-                            <button id="btn-col-spectrum" class="color-select-btn active" onclick="setColorScheme('spectrum')">
-                                <span class="color-dot-gradient" style="background:linear-gradient(135deg, #3B82F6, #10B981, #F59E0B, #EF4444);"></span>
-                                <div style="flex:1;text-align:left;">
-                                    <div class="col-title">Rainbow / Spectrum</div>
-                                    <div class="col-desc">N → C terminus gradient</div>
-                                </div>
-                            </button>
+                        <button id="btn-spin" class="view-btn" onclick="toggleSpin()">
+                            <div class="view-btn-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <path d="M21.5 2v6h-6M2.5 22v-6h6"/>
+                                    <path d="M2 11.5a10 10 0 0 1 18.8-4.3L21.5 8M22 12.5a10 10 0 0 1-18.8 4.2L2.5 16"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="view-btn-title">Spin 3D</div>
+                                <div id="spin-status-text" class="view-btn-sub">Turntable</div>
+                            </div>
+                        </button>
 
-                            <button id="btn-col-ssPyMOL" class="color-select-btn" onclick="setColorScheme('ssPyMOL')">
-                                <span class="color-dot-gradient" style="background:linear-gradient(135deg, #EC4899 50%, #EAB308 50%);"></span>
-                                <div style="flex:1;text-align:left;">
-                                    <div class="col-title">Secondary Structure</div>
-                                    <div class="col-desc">α-Helix (Red), β-Sheet (Yellow)</div>
-                                </div>
-                            </button>
+                        <button class="view-btn" onclick="resetView()">
+                            <div class="view-btn-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4v6h6"/><path d="M20 20a9 9 0 1 0-9 0"/></svg>
+                            </div>
+                            <div>
+                                <div class="view-btn-title">Reset</div>
+                                <div class="view-btn-sub">Center view</div>
+                            </div>
+                        </button>
 
-                            <button id="btn-col-chain" class="color-select-btn" onclick="setColorScheme('chain')">
-                                <span class="color-dot-gradient" style="background:linear-gradient(135deg, #3B82F6 25%, #10B981 50%, #A855F7 75%, #F59E0B 100%);"></span>
-                                <div style="flex:1;text-align:left;">
-                                    <div class="col-title">Chain / Subunit</div>
-                                    <div class="col-desc">Color by individual chain</div>
-                                </div>
-                            </button>
-
-                            <button id="btn-col-element" class="color-select-btn" onclick="setColorScheme('element')">
-                                <span class="color-dot-gradient" style="background:linear-gradient(135deg, #6B7280 40%, #EF4444 70%, #3B82F6 100%);"></span>
-                                <div style="flex:1;text-align:left;">
-                                    <div class="col-title">Element (CPK)</div>
-                                    <div class="col-desc">C (gray), N (blue), O (red)</div>
-                                </div>
-                            </button>
-
-                            <button id="btn-col-bfactor" class="color-select-btn" onclick="setColorScheme('bfactor')">
-                                <span class="color-dot-gradient" style="background:linear-gradient(135deg, #3B82F6, #FFFFFF, #EF4444);"></span>
-                                <div style="flex:1;text-align:left;">
-                                    <div class="col-title">B-Factor / Mobility</div>
-                                    <div class="col-desc">Thermal / Cryo-EM flexibility</div>
-                                </div>
-                            </button>
-                        </div>
-
-                        <div class="nt-divider" style="margin:10px 0;"></div>
-
-                        <!-- Animation & Controls -->
-                        <p class="nt-card-title" style="margin-bottom:8px;font-size:11px;letter-spacing:0.06em;color:var(--text3);text-transform:uppercase;font-weight:700;">
-                            Controls
-                        </p>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
-                            <button id="btn-spin" class="view-pill-btn" onclick="toggleSpin()">
-                                <span class="pill-icon">🔄</span> <span id="spin-text">Spin 3D</span>
-                            </button>
-                            <button class="view-pill-btn" onclick="resetView()">
-                                <span class="pill-icon">🎯</span> Recenter
-                            </button>
-                        </div>
-                        <button class="view-pill-btn" onclick="clearViewer()" style="width:100%;color:#EF4444;border-color:rgba(239,68,68,0.25);">
-                            <span class="pill-icon">🗑️</span> Clear View
+                        <button class="view-btn" onclick="clearViewer()">
+                            <div class="view-btn-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M9 6v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V6"/></svg>
+                            </div>
+                            <div>
+                                <div class="view-btn-title">Clear</div>
+                                <div class="view-btn-sub">Reset all</div>
+                            </div>
                         </button>
                     </div>
 
                     <div class="nt-gap"></div>
                     <div class="nt-info" style="font-size:11px;line-height:1.45;">
-                        💡 <strong>Pro-Tip:</strong> Click & drag to rotate. Scroll to zoom. Hover over any residue to inspect secondary structure & chain details.
+                        Hover residue to see secondary structure, chain ID & atom details.
                     </div>
                 </div>
             </div>
@@ -851,7 +917,9 @@
                 url: uri,
                 success: function(data) {
                     statusEl.style.display = 'none';
-                    controlPanel.classList.remove('hidden');
+                    const palettePanel = document.getElementById('palettePanel');
+                    if (palettePanel) palettePanel.classList.remove('hidden');
+                    if (controlPanel) controlPanel.classList.remove('hidden');
                     viewer.addModel(data, "pdb");
 
                     // Reset spin and surface state on new model load
@@ -896,7 +964,9 @@
                     fetchProteinInfo(pdbID);
                 },
                 error: function() {
-                    controlPanel.classList.add('hidden');
+                    const palettePanel = document.getElementById('palettePanel');
+                    if (palettePanel) palettePanel.classList.add('hidden');
+                    if (controlPanel) controlPanel.classList.add('hidden');
                     proteinInfo.classList.add('hidden');
                     if (viewer) { viewer.clear(); }
 
@@ -1115,8 +1185,10 @@
             if (modeStick)   modeStick.classList.toggle('active', currentMode === 'stick');
             if (modeSphere)  modeSphere.classList.toggle('active', currentMode === 'sphere');
 
-            const surfBtn = document.getElementById('btn-mode-surface');
+            const surfBtn  = document.getElementById('btn-mode-surface');
+            const surfText = document.getElementById('surface-status-text');
             if (surfBtn) surfBtn.classList.toggle('active', isSurfaceOn);
+            if (surfText) surfText.textContent = isSurfaceOn ? 'Active (0.70)' : 'ChimeraX Mesh';
 
             const colBtns = {
                 'spectrum': document.getElementById('btn-col-spectrum'),
@@ -1130,11 +1202,9 @@
             });
 
             const spinBtn  = document.getElementById('btn-spin');
-            const spinText = document.getElementById('spin-text');
-            if (spinBtn) {
-                spinBtn.classList.toggle('active', isSpinning);
-                if (spinText) spinText.textContent = isSpinning ? 'Pause Spin' : 'Spin 3D';
-            }
+            const spinText = document.getElementById('spin-status-text');
+            if (spinBtn) spinBtn.classList.toggle('active', isSpinning);
+            if (spinText) spinText.textContent = isSpinning ? 'Rotating...' : 'Turntable';
         }
 
         function clearViewer() {
@@ -1156,7 +1226,8 @@
             statusEl.style.display = 'block';
             statusEl.textContent = 'Enter a protein name or PDB ID to begin.';
             document.getElementById('proteinInfo').classList.add('hidden');
-            document.getElementById('controlPanel').classList.add('hidden');
+            document.getElementById('palettePanel')?.classList.add('hidden');
+            document.getElementById('controlPanel')?.classList.add('hidden');
             document.getElementById('pdbInput').value = '';
             document.getElementById('altStructuresBar')?.classList.add('hidden');
             const chips = document.getElementById('altStructuresChips');
