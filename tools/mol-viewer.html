@@ -258,7 +258,160 @@
     <script>
         let searchTimeout;
         let viewer;
-        const SQL_API_BASE = 'http://localhost:5000/api';
+        
+        // Curated Biological Dictionary for instant (0ms) offline/online resolution
+        const CURATED_PROTEINS = [
+            { names: ["haemoglobin", "hemoglobin", "hba", "hbb", "deoxyhemoglobin", "deoxyhaemoglobin"], code: "1A3N", title: "Hemoglobin (Deoxy, Human)" },
+            { names: ["oxyhaemoglobin", "oxyhemoglobin"], code: "1HHO", title: "Oxyhemoglobin (Human)" },
+            { names: ["sickle cell hemoglobin", "sickle cell haemoglobin", "sickle hemoglobin", "sickle haemoglobin", "hbs"], code: "2HBS", title: "Sickle Cell Hemoglobin" },
+            { names: ["insulin", "human insulin"], code: "4INS", title: "Insulin (Homo sapiens)" },
+            { names: ["myoglobin", "sperm whale myoglobin"], code: "1MBO", title: "Myoglobin (Sperm Whale)" },
+            { names: ["crambin"], code: "1CRN", title: "Crambin (Abyssinian Cabbage)" },
+            { names: ["spike", "sars-cov-2 spike", "coronavirus spike", "covid spike", "spike glycoprotein"], code: "6VXX", title: "SARS-CoV-2 Spike Glycoprotein" },
+            { names: ["cas9", "crispr", "crispr-cas9", "cas9 endonuclease"], code: "4UN3", title: "CRISPR-Cas9 Endonuclease" },
+            { names: ["p53", "tumor protein p53", "tp53", "tumor suppressor p53"], code: "1TUP", title: "p53 Tumor Suppressor / DNA Complex" },
+            { names: ["lysozyme", "hen egg lysozyme", "hel"], code: "1LYZ", title: "Lysozyme (Hen Egg White)" },
+            { names: ["collagen", "collagen triple helix"], code: "1CAG", title: "Collagen Triple Helix Model" },
+            { names: ["gfp", "green fluorescent protein"], code: "1EMA", title: "Green Fluorescent Protein (Aequorea victoria)" },
+            { names: ["rfp", "red fluorescent protein", "dsred"], code: "1GGX", title: "Red Fluorescent Protein (DsRed)" },
+            { names: ["yfp", "yellow fluorescent protein"], code: "1YFP", title: "Yellow Fluorescent Protein" },
+            { names: ["bfp", "blue fluorescent protein"], code: "1BFP", title: "Blue Fluorescent Protein" },
+            { names: ["dna polymerase", "taq polymerase", "taq"], code: "1TAU", title: "Taq DNA Polymerase" },
+            { names: ["rna polymerase", "rnap", "rna pol"], code: "1I6V", title: "RNA Polymerase II" },
+            { names: ["actin", "f-actin", "g-actin"], code: "1ATN", title: "Actin-DNase I Complex" },
+            { names: ["myosin"], code: "1MYS", title: "Myosin Subfragment-1" },
+            { names: ["keratin"], code: "6EC0", title: "Human Keratin Intermediate Filament" },
+            { names: ["albumin", "human serum albumin", "hsa", "bsa", "bovine serum albumin"], code: "4F5S", title: "Human Serum Albumin" },
+            { names: ["aquaporin", "aqp1", "water channel"], code: "1FQY", title: "Aquaporin-1 Water Channel" },
+            { names: ["rhodopsin"], code: "1F88", title: "Bovine Rhodopsin (GPCR)" },
+            { names: ["atp synthase", "atpase", "f1-atpase"], code: "1E79", title: "Mitochondrial ATP Synthase" },
+            { names: ["cytochrome c", "cyt c"], code: "1HRC", title: "Cytochrome C (Equus caballus)" },
+            { names: ["ubiquitin"], code: "1UBQ", title: "Ubiquitin (Human)" },
+            { names: ["ribosome", "70s ribosome"], code: "4V4A", title: "Thermus thermophilus 70S Ribosome" },
+            { names: ["hiv protease", "hiv-1 protease"], code: "1HXB", title: "HIV-1 Protease Complexed with Inhibitor" },
+            { names: ["hiv reverse transcriptase", "reverse transcriptase"], code: "1HYS", title: "HIV-1 Reverse Transcriptase" },
+            { names: ["antibody", "antibodies", "immunoglobulin", "igg", "mab"], code: "1IGT", title: "Intact Mouse IgG2a Monoclonal Antibody" },
+            { names: ["catalase"], code: "1DGB", title: "Bovine Liver Catalase" },
+            { names: ["luciferase", "firefly luciferase"], code: "1LCI", title: "Firefly Luciferase" },
+            { names: ["telomerase"], code: "7LMA", title: "Human Telomerase Core Complex" },
+            { names: ["amylase", "alpha amylase", "salivary amylase"], code: "1PPI", title: "Porcine Pancreatic Alpha-Amylase" },
+            { names: ["rubisco"], code: "8RUC", title: "Rubisco (Plant Carbon Fixation)" },
+            { names: ["haemocyanin", "hemocyanin"], code: "1LL1", title: "Hemocyanin (Octopus dofleini)" },
+            { names: ["ferritin"], code: "1FHA", title: "Human H-Chain Ferritin" },
+            { names: ["carbonic anhydrase"], code: "1CA2", title: "Human Carbonic Anhydrase II" },
+            { names: ["superoxide dismutase", "sod"], code: "1CB4", title: "Cu,Zn Superoxide Dismutase" },
+            { names: ["kinase", "egfr kinase", "egfr"], code: "1M17", title: "EGFR Kinase Domain" },
+            { names: ["k-ras", "kras", "ras"], code: "4OBE", title: "K-Ras G12D Oncogenic Mutant" },
+            { names: ["chymotrypsin"], code: "4CHA", title: "Bovine Alpha-Chymotrypsin" },
+            { names: ["trypsin"], code: "1UTN", title: "Bovine Trypsin" },
+            { names: ["pepsin"], code: "1PSA", title: "Porcine Pepsin" },
+            { names: ["prion", "prion protein"], code: "1AG2", title: "Human Prion Protein" },
+            { names: ["streptavidin"], code: "1STP", title: "Streptavidin-Biotin Complex" },
+            { names: ["transferrin"], code: "1A8E", title: "Human Serum Transferrin" },
+            { names: ["cholera toxin"], code: "1XTC", title: "Cholera Toxin B-Pentamer" }
+        ];
+
+        function findCuratedProtein(query) {
+            query = query.toLowerCase().trim();
+            if (!query) return null;
+            // 1. Direct code or name match
+            for (const p of CURATED_PROTEINS) {
+                if (p.code.toLowerCase() === query) return p;
+                if (p.names.includes(query)) return p;
+            }
+            // 2. Contains match (e.g. "human haemoglobin" -> matches "haemoglobin")
+            for (const p of CURATED_PROTEINS) {
+                for (const n of p.names) {
+                    if (query.includes(n) || n.includes(query)) return p;
+                }
+            }
+            return null;
+        }
+
+        async function searchLocalDb(query) {
+            const endpoints = [];
+            if (window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                endpoints.push(`http://${window.location.hostname}:5000/api/proteins/search?q=${encodeURIComponent(query)}&limit=8`);
+            }
+            endpoints.push(`http://localhost:5000/api/proteins/search?q=${encodeURIComponent(query)}&limit=8`);
+            endpoints.push(`http://127.0.0.1:5000/api/proteins/search?q=${encodeURIComponent(query)}&limit=8`);
+
+            for (const ep of endpoints) {
+                try {
+                    const res = await fetch(ep, { signal: AbortSignal.timeout(600) });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data) && data.length > 0) return data;
+                    }
+                } catch(e) {}
+            }
+            return [];
+        }
+
+        async function searchRcsbApi(query) {
+            // 1. Preferred: HTTP GET with URL-encoded query (no CORS preflight issues on campus Wi-Fi)
+            try {
+                const queryObj = {
+                    query: {
+                        type: "terminal",
+                        service: "full_text",
+                        parameters: { value: query }
+                    },
+                    return_type: "entry",
+                    request_options: {
+                        paginate: { start: 0, rows: 5 }
+                    }
+                };
+                const url = `https://search.rcsb.org/rcsbsearch/v2/query?json=${encodeURIComponent(JSON.stringify(queryObj))}`;
+                const res = await fetch(url, { signal: AbortSignal.timeout(4500) });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.result_set && data.result_set.length > 0) {
+                        return data.result_set.map(item => item.identifier);
+                    }
+                }
+            } catch(e) {}
+
+            // 2. Fallback: HTTP POST
+            try {
+                const res = await fetch("https://search.rcsb.org/rcsbsearch/v2/query", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        query: {
+                            type: "terminal",
+                            service: "full_text",
+                            parameters: { value: query }
+                        },
+                        return_type: "entry"
+                    }),
+                    signal: AbortSignal.timeout(4500)
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.result_set && data.result_set.length > 0) {
+                        return data.result_set.map(item => item.identifier);
+                    }
+                }
+            } catch(e) {}
+
+            return [];
+        }
+
+        async function searchRcsbAutocomplete(query) {
+            try {
+                const res = await fetch(`https://search.rcsb.org/search/autocomplete?q=${encodeURIComponent(query)}&json=1&type=polymer_entity`, {
+                    signal: AbortSignal.timeout(2500)
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        return data.map(item => item.text);
+                    }
+                }
+            } catch(e) {}
+            return [];
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             const dropdown = document.getElementById('searchDropdown');
@@ -289,41 +442,50 @@
 
             searchTimeout = setTimeout(async () => {
                 let matches = [];
-                // 1. Fast Query to Bio-Nexus SQLite Engine (< 2ms)
-                try {
-                    const localRes = await fetch(`${SQL_API_BASE}/proteins/search?q=${encodeURIComponent(input)}&limit=8`, {
-                        signal: AbortSignal.timeout(600)
-                    });
-                    if (localRes.ok) {
-                        matches = await localRes.json();
-                    }
-                } catch (err) {
-                    // Local backend offline, will fallback to RCSB
-                }
+                const clean = input.toLowerCase();
 
-                // 2. Graceful Fallback: RCSB Autocomplete API if local SQL is offline/empty
-                if (!matches || matches.length === 0) {
+                // 1. Instant Curated Protein Index (0ms offline-first)
+                const curatedMatches = CURATED_PROTEINS.filter(p => 
+                    p.code.toLowerCase().includes(clean) ||
+                    p.title.toLowerCase().includes(clean) ||
+                    p.names.some(n => n.includes(clean))
+                ).slice(0, 5).map(p => ({ name: p.title, code: p.code }));
+
+                matches.push(...curatedMatches);
+
+                // 2. Query Local SQLite DB (< 2ms)
+                if (matches.length < 6) {
                     try {
-                        const rcsbRes = await fetch(`https://search.rcsb.org/search/autocomplete?q=${encodeURIComponent(input)}&json=1&type=polymer_entity`, {
-                            signal: AbortSignal.timeout(2500)
-                        });
-                        const data = await rcsbRes.json();
-                        if (data && data.length > 0) {
-                            matches = data.slice(0, 6).map(item => ({
-                                name: item.text,
-                                code: item.text
-                            }));
+                        const localHits = await searchLocalDb(input);
+                        if (localHits && localHits.length > 0) {
+                            localHits.forEach(h => {
+                                if (!matches.some(m => m.code.toUpperCase() === h.code.toUpperCase())) {
+                                    matches.push(h);
+                                }
+                            });
                         }
-                    } catch (e) {
-                        // ignore network errors
-                    }
+                    } catch(e) {}
                 }
 
-                // 3. Render dropdown items
+                // 3. Fallback: RCSB Autocomplete API if still few results
+                if (matches.length < 4) {
+                    try {
+                        const autoTexts = await searchRcsbAutocomplete(input);
+                        autoTexts.slice(0, 4).forEach(text => {
+                            const idMatch = text.match(/\b([0-9][a-zA-Z0-9]{3})\b/);
+                            const code = idMatch ? idMatch[1].toUpperCase() : text;
+                            if (!matches.some(m => m.code === code)) {
+                                matches.push({ name: text, code: code });
+                            }
+                        });
+                    } catch(e) {}
+                }
+
+                // Render dropdown items
                 dropdown.innerHTML = '';
                 if (matches && matches.length > 0) {
                     dropdown.classList.remove('hidden');
-                    matches.forEach(match => {
+                    matches.slice(0, 8).forEach(match => {
                         let li = document.createElement('li');
                         li.innerHTML = `<span>${match.name}</span><span style="font-family: monospace; font-size: 11px; padding: 2px 6px; background: rgba(255,255,255,0.08); border-radius: 4px; color: #D97757;">${match.code}</span>`;
                         li.onclick = () => {
@@ -336,7 +498,7 @@
                 } else {
                     dropdown.classList.add('hidden');
                 }
-            }, 120);
+            }, 100);
         }
 
         document.addEventListener('click', e => {
@@ -368,67 +530,63 @@
                 </div>
             `;
 
-            // If it's a 4-letter alphanumeric string (e.g. 4INS, 3I04, 1MBO)
+            // 0. Direct 4-letter alphanumeric PDB ID (e.g. 4INS, 1A3N, 1MBO)
             if (input.length === 4 && /^[a-zA-Z0-9]{4}$/.test(input)) {
                 renderPDB(input.toUpperCase(), container);
                 return;
             }
 
-            // Search by protein name:
-            // 1. Try Bio-Nexus SQLite Engine (< 2ms)
-            try {
-                const localRes = await fetch(`${SQL_API_BASE}/proteins/search?q=${encodeURIComponent(input)}&limit=1`, {
-                    signal: AbortSignal.timeout(1000)
-                });
-                if (localRes.ok) {
-                    const localData = await localRes.json();
-                    if (localData && localData.length > 0 && localData[0].code) {
-                        renderPDB(localData[0].code, container);
-                        return;
-                    }
-                }
-            } catch (err) {
-                // SQLite backend offline, fallback to RCSB
+            const cleanInput = input.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim();
+
+            // 1. Instant Curated Protein Index (0ms match)
+            const curatedMatch = findCuratedProtein(cleanInput);
+            if (curatedMatch) {
+                renderPDB(curatedMatch.code, container);
+                return;
             }
 
-            // 2. Query RCSB full-text search API
-            try {
-                const response = await fetch("https://search.rcsb.org/rcsbsearch/v2/query", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        "query": { "type": "terminal", "service": "full_text", "parameters": { "value": input } },
-                        "return_type": "entry",
-                        "request_options": { "results_size": 1 }
-                    }),
-                    signal: AbortSignal.timeout(4500)
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.result_set && data.result_set.length > 0) {
-                        renderPDB(data.result_set[0].identifier, container);
-                        return;
-                    }
-                }
-            } catch(e) {
-                // search API failed, try autocomplete
+            // 2. Query Local SQLite DB
+            const localHits = await searchLocalDb(input);
+            if (localHits && localHits.length > 0 && localHits[0].code) {
+                renderPDB(localHits[0].code, container);
+                return;
             }
 
-            // 3. Fallback: RCSB Autocomplete API
-            try {
-                const autoRes = await fetch(`https://search.rcsb.org/search/autocomplete?q=${encodeURIComponent(input)}&json=1&type=polymer_entity`, {
-                    signal: AbortSignal.timeout(3000)
-                });
-                const autoData = await autoRes.json();
-                if (autoData && autoData.length > 0) {
-                    const matchId = autoData[0].text.match(/\b([0-9][a-zA-Z0-9]{3})\b/);
-                    if (matchId) {
-                        renderPDB(matchId[1].toUpperCase(), container);
-                        return;
-                    }
+            // 3. Query RCSB PDB Full-Text Search API (GET / POST)
+            const rcsbHits = await searchRcsbApi(input);
+            if (rcsbHits && rcsbHits.length > 0) {
+                renderPDB(rcsbHits[0], container);
+                return;
+            }
+
+            // 4. Try American <-> British Spelling Equivalence (e.g. haemoglobin <-> hemoglobin)
+            let altSpell = cleanInput;
+            if (altSpell.includes('haem')) altSpell = altSpell.replace(/haem/g, 'hem');
+            else if (altSpell.includes('hem')) altSpell = altSpell.replace(/hem/g, 'haem');
+            if (altSpell.includes('oest')) altSpell = altSpell.replace(/oest/g, 'est');
+            else if (altSpell.includes('est')) altSpell = altSpell.replace(/est/g, 'oest');
+
+            if (altSpell !== cleanInput) {
+                const altCurated = findCuratedProtein(altSpell);
+                if (altCurated) {
+                    renderPDB(altCurated.code, container);
+                    return;
                 }
-            } catch(e) {
-                // ignore
+                const altHits = await searchRcsbApi(altSpell);
+                if (altHits && altHits.length > 0) {
+                    renderPDB(altHits[0], container);
+                    return;
+                }
+            }
+
+            // 5. Try Autocomplete identifier extraction
+            const autoTexts = await searchRcsbAutocomplete(input);
+            for (const text of autoTexts) {
+                const m = text.match(/\b([0-9][a-zA-Z0-9]{3})\b/);
+                if (m) {
+                    renderPDB(m[1].toUpperCase(), container);
+                    return;
+                }
             }
 
             // Structure not found
@@ -438,11 +596,13 @@
                     No protein structure found for "${input}"
                 </div>
                 <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">
-                    Try searching by 4-letter PDB ID or try one of the curated structures below:
+                    Try a common protein name or a 4-letter PDB code from the quick picks below:
                 </div>
                 <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+                    <button class="nt-btn" onclick="loadSuggestedPDB('1A3N')" style="font-size:12px;padding:4px 10px;">Haemoglobin (1A3N)</button>
                     <button class="nt-btn" onclick="loadSuggestedPDB('4INS')" style="font-size:12px;padding:4px 10px;">Insulin (4INS)</button>
                     <button class="nt-btn" onclick="loadSuggestedPDB('1MBO')" style="font-size:12px;padding:4px 10px;">Myoglobin (1MBO)</button>
+                    <button class="nt-btn" onclick="loadSuggestedPDB('6VXX')" style="font-size:12px;padding:4px 10px;">Spike (6VXX)</button>
                     <button class="nt-btn" onclick="loadSuggestedPDB('1CRN')" style="font-size:12px;padding:4px 10px;">Crambin (1CRN)</button>
                 </div>
             `;
